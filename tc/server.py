@@ -4,23 +4,15 @@ from flask import Flask, request
 from flask.ext.restful import reqparse, abort, Api, Resource
 from uuid import uuid1
 
-from tc.utils import ipv4
+from tc.utils import get_logger, ipv4, print_banner
 
+logger = get_logger(__name__)
 app = Flask(__name__)
 api = Api(app)
 
 SCREENS = {}
 CAMERAS = {}
 ROUTES = []
-
-parser = reqparse.RequestParser()
-parser.add_argument('name',   type=str)
-parser.add_argument('site',   type=str)
-parser.add_argument('addr',   type=ipv4_type)
-parser.add_argument('port',   type=int)
-parser.add_argument('id',     type=str)
-parser.add_argument('camera', type=str)
-parser.add_argument('screen', type=str)
 
 class CamerasResource(Resource):
 
@@ -37,15 +29,15 @@ class CamerasResource(Resource):
                 abort(404)
         return CAMERAS
 
-    def post(self):
+    def post(self, id):
         args = self.parser.parse_args()
         camera = SimpleNamespace(
             id   = uuid1().hex,
             name = args['name'],
-            site = args['site'],
             addr = args['addr'],
             http_port = args['http_port'])
         CAMERAS[camera.id] = camera
+        logger.info("New camera created", camera)
         return camera.id, 201
 
     def delete(self, id):
@@ -55,15 +47,17 @@ class CamerasResource(Resource):
         return '', 204
 
 
-resources = [
-    (CamerasResource, {'id': None}, '/cameras', '/cameras/<string:id>'),
-    ]
-
 api.add_resource(CamerasResource,
     '/cameras',
     '/cameras/<string:id>',
     defaults={'id': None})
 
 def main():
-    logging.getLogger('werkzeug').setLevel(logging.ERROR)
-    app.run()
+    print_banner()
+    # logging.getLogger('werkzeug').setLevel(logging.DEBUG)
+    port = 5000
+    logger.info("Starting server on port %s", 5000)
+    app.run(port=port, debug=True)
+
+if __name__ == '__main__':
+    main()
