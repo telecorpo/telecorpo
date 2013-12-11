@@ -1,4 +1,5 @@
 import atexit
+import flask
 import logging
 import sys
 import types
@@ -23,7 +24,6 @@ def ask(prompt, default=None, validator=lambda x: x):
     return validator(value) if value != '' else validator(default)
 
 def connect():
-    logger.info("Attemping new connection")
     try:
         server.addr   = ask('Server address > ', '127.0.0.1', ipv4)
         server.port   = ask('Server port    > ', 5000, int)
@@ -63,8 +63,8 @@ def connect():
 
     except TelecorpoException as e:
         logger.error(e.message)
-    except (ConnectionError, Timeout):
-        logger.error("Could not connect to server %s on port %d", server_addr, server_port)
+    except (ConnectionError, ConnectionRefusedError, Timeout):
+        logger.error("Could not connect to server %s on port %d", server.addr, server.port)
     sys.exit(1)
 
 def cleanup(id, url):
@@ -81,8 +81,6 @@ def cleanup(id, url):
 app = Flask(__name__)
 api = Api(app)
 
-logger.debug("Creating Streamer with source element \"%s\"", source)
-streamer = Streamer(source)
 
 
 class Resource(Resource):
@@ -100,10 +98,10 @@ class Resource(Resource):
 
         if args['type'] == 'add':
             logger.info("Starting streaming to %s on port %d", addr, rtp_port)
-            streamer.add_client(addr, rtp_port)
+            flask.g.streamer.add_client(addr, rtp_port)
         elif args['type'] == 'remove':
             logger.info("Stopping streaming to %s on port %d", addr, rtp_port)
-            streamer.remove_client(addr, rtp_port)
+            flask.g.streamer.remove_client(addr, rtp_port)
         return '', 200
 
 api.add_resource(Resource, '/')
@@ -112,6 +110,9 @@ def main():
     print_banner()
     connect()
     atexit.register(cleanup, camera.id, server.url)
+
+    logger.debug("Creating Streamer with source element \"%s\"", camera.source)
+    flask.g.streammer = Streamer(camera.source)
 
     logger.debug("Starting HTTP interface.")
     logging.getLogger('werkzeug').setLevel(logging.ERROR)

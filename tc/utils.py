@@ -1,5 +1,5 @@
 
-import coloredlogs
+import colorlog
 import logging
 import re
 import socket
@@ -34,12 +34,13 @@ def find_free_port():
 
 
 def get_logger(name):
+    format = "%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s"
+    handler = logging.StreamHandler()
+    handler.setFormatter(colorlog.ColoredFormatter(format))
+
     logger = logging.getLogger(name)
-    logger.addHandler(coloredlogs.ColoredStreamHandler(
-        level           = logging.DEBUG,
-        show_hostname   = False,
-        show_timestamps = False
-        ))
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
     return logger
 
 def print_banner():
