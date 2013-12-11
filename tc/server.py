@@ -1,9 +1,10 @@
 import logging
+from types import SimpleNamespace
 from flask import Flask, request
 from flask.ext.restful import reqparse, abort, Api, Resource
 from uuid import uuid1
 
-from utils import ipv4_type
+from tc.utils import ipv4
 
 app = Flask(__name__)
 api = Api(app)
@@ -23,90 +24,46 @@ parser.add_argument('screen', type=str)
 
 class CamerasResource(Resource):
 
-    def get(self):
-        id = parser.parse_args()['id']
+    parser = reqparse.RequestParser()
+    parser.add_argument('name', type=str, required=True)
+    parser.add_argument('addr', type=ipv4, required=True)
+    parser.add_argument('http_port', type=int, required=True)
+
+    def get(self, id):
         if id:
-            assert id in CAMERAS
-            return CAMERAS[id]
+            try:
+                return CAMERAS[id]
+            except KeyError:
+                abort(404)
         return CAMERAS
 
     def post(self):
-        # FIXME assert that args['addr'] is a valid IP address
-        args = parse.parse_args()
-        assert all(map(args.__contains__, ['name', 'site', 'addr']))
-        camera = dict(
+        args = self.parser.parse_args()
+        camera = SimpleNamespace(
             id   = uuid1().hex,
             name = args['name'],
             site = args['site'],
             addr = args['addr'],
-            screens = [])
-        
-        CAMERAS[camera['id']] = camera
-        return CAMERAS[camera['id']], 201
+            http_port = args['http_port'])
+        CAMERAS[camera.id] = camera
+        return camera.id, 201
 
-    def delete(self):
-        id = parser.parse_args()['id']
-        assert id in CAMERAS
+    def delete(self, id):
+        if (not id) or (id not in CAMERAS):
+            abort(400)
         del CAMERAS[id]
-        #TODO notify associated displays
         return '', 204
 
 
-class ScreensResource(Resource):
-    
-    def get(self):
-        id = parser.parse_args()['id']
-        if id:
-            assert id in SCREENS
-            return SCREENS[id]
-        return SCREENS
+resources = [
+    (CamerasResource, {'id': None}, '/cameras', '/cameras/<string:id>'),
+    ]
 
-    def post(self):
-        # FIXME assert that args['addr'] is a valid IP address
-        args = parser.parse_args()
-        assert all(map(args.__contains__, ['name', 'site', 'addr', 'port']))
-        screen = dict(
-            id   = uuid1().hex,
-            name = args['name'],
-            site = args['site'],
-            addr = args['addr'],
-            port = args['port'])
+api.add_resource(CamerasResource,
+    '/cameras',
+    '/cameras/<string:id>',
+    defaults={'id': None})
 
-        SCREENS[screen['id']] = screen
-        return SCREENS[screen['id']], 201
-
-    def delete(self):
-        id = parser.parse_args()['id']
-        assert id in SCREENS
-        del SCREENS[id]
-        return '', 204
-
-class RoutesResource(Resource):
-    
-    def get(self):
-        return ROUTES 
-
-    def post(self):
-        args = parser.parse_args()
-        cam = args['camera']
-        scr = args['screen']
-        
-        assert (cam in CAMERAS) and (scr in SCREENS)
-         
-        affected_routes = [(c, s) for c, s in ROUTES if scr==s]
-        assert len(affected_routes) <= 1
-        if len(affected_routes) == 1:
-            ROUTES.remove(affected_routes[0])
-            # TODO disable affected route
-
-        ROUTES.append((cam, scr))
-        # TODO notify camer where to stream
-        return (cam, scr)
-
-
-api.add_resource(ScreensResource, '/screens')
-api.add_resource(CamerasResource, '/cameras')
-api.add_resource(RoutesResource, '/routes')
-
-if __name__ == '__main__':
-    app.run(debug=True)
+def main():
+    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    app.run()

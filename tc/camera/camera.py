@@ -16,8 +16,8 @@ camera = types.SimpleNamespace()
 server = types.SimpleNamespace()
 
 
-def input(prompt, default=None, validator=lambda x: x):
-    value = raw_input(prompt).strip()
+def ask(prompt, default=None, validator=lambda x: x):
+    value = input(prompt).strip()
     if not (value or default):
         raise ValueError('Empty value')
     return validator(value) if value != '' else validator(default)
@@ -25,11 +25,11 @@ def input(prompt, default=None, validator=lambda x: x):
 def connect():
     logger.info("Attemping new connection")
     try:
-        server.addr   = input('Server address > ', '127.0.0.1', ipv4)
-        server.port   = input('Server port    > ', 5000, int)
+        server.addr   = ask('Server address > ', '127.0.0.1', ipv4)
+        server.port   = ask('Server port    > ', 5000, int)
         camera.source = 'videotestsrc ! video/x-raw,framerate=30/1,width=480,heigth=360'
-        camera.source = input('Source element > ', camera.source)
-        camera.name   = input('Camera name    > ')
+        camera.source = ask('Source element > ', camera.source)
+        camera.name   = ask('Camera name    > ')
 
     except ValueError as e:
         logger.error(e.message)

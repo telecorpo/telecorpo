@@ -1,9 +1,10 @@
 
 import coloredlogs
 import logging
-import os.path
 import re
 import socket
+
+from os import path
 
 class TelecorpoException(Exception):
     pass
@@ -11,7 +12,7 @@ class TelecorpoException(Exception):
 ipv4_regex = re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 def ipv4(value):
     if not ipv4_regex.search(value):
-        raise ValueError(u"Invalid IP address: {}".format(value))
+        raise ValueError("Invalid IP address: {}".format(value))
     return value
 
 def get_ip_address(addr, port=5000):
@@ -42,4 +43,5 @@ def get_logger(name):
     return logger
 
 def print_banner():
-    print open(os.path.join(os.path.dirname(__file__), 'banner.txt')).read()
+    banner = path.join(path.dirname(__file__), 'banner.txt')
+    print(open(banner).read())
