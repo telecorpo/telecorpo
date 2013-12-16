@@ -3,7 +3,7 @@ setup (
     name = 'telecorpo',
     version = '0.1',
     packages = find_packages(),
-    install_requires = ['docopt', 'flask', 'flask-restful', 'requests', 'colorlog'],
+    install_requires = ['docopt', 'flask', 'flask-restful', 'requests', 'colorlog', 'ipython'],
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
