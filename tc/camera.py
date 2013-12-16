@@ -8,8 +8,7 @@ from gi.repository      import GObject, Gst
 from types              import SimpleNamespace
 
 from tc.client import Client
-from tc.utils  import get_logger, ask, print_banner, ipv4
-
+from tc.utils  import get_logger, ask, print_banner, ipv4, ExitResource 
 logger = get_logger(__name__)
 
 app = Flask(__name__)
@@ -23,7 +22,7 @@ class Streamer:
         # Create elements
         self.pipeline = Gst.parse_launch(
             ' %s ! tee name=t'
-            ' t. ! queue ! x264enc tune=zerolatency ! rtph264pay ! multiudpsink name=hd'
+            ' t. ! queue ! x264enc tune=zerolatency ! rtph264pay ! multiudpsink name=hd sync=true'
             ' t. ! queue ! autovideosink' % source
             )
         self.hdsink = self.pipeline.get_by_name('hd')
@@ -54,7 +53,7 @@ class Streamer:
 
 
 def ask_user():
-    source = 'videotestsrc ! video/x-raw,framerate=30/1,width=480,heigth=360'
+    source = 'videotestsrc pattern=ball ! video/x-raw,format=I420,framerate=30/1,width=480,heigth=360'
     srv_addr = ask('Server address > ', '127.0.0.1', ipv4)
     srv_port = ask('Server port    > ', 5000, int)
     cam_src  = ask('Source element > ', source)
@@ -89,6 +88,7 @@ class StreamerResource(Resource):
 def main():
     print_banner()
     api.add_resource(StreamerResource, '/<string:action>')
+    api.add_resource(ExitResource, '/exit')
 
     try: 
         srv_addr, srv_port, cam_src, cam_name = ask_user()
