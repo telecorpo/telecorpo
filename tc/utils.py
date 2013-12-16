@@ -9,7 +9,7 @@ import types
 
 from requests import post, delete
 from requests.exceptions import Timeout
-from flask.ext.restful import Api
+from flask.ext.restful import Api, Resource
 from os import path
 
 
@@ -117,5 +117,12 @@ def connect(client, server, type):
                      server.addr, server.port)
     sys.exit(1)
 
+class ExitResource(Resource):
+    def delete(self):
+        func = flask.request.environ.get('werkzeug.server.shutdown')
+        if func is None:
+            raise RuntimeError('Not running with the Werkzeug Server')
+        logger.warn("Exiting")
+        func()
 
 logger = get_logger(__name__)
