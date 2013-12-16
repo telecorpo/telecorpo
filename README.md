@@ -1,3 +1,1 @@
-
-= Install
-    sh -e $(wget https://bitbucket.org/pslacerda/telecorpo/raw/b3cde2818a357f28a57aa94679a6eacb93d73ab2/install.sh
+sh -e $(wget https://bitbucket.org/pslacerda/telecorpo/raw/b3cde2818a357f28a57aa94679a6eacb93d73ab2/install.sh
