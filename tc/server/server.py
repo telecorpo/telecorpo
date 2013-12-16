@@ -7,6 +7,7 @@ import flask.ext.restful
 from tc import utils
 from tc.server.camera import CameraResource, CameraListResource
 from tc.server.screen import ScreenResource, ScreenListResource
+from tc.server.route  import RouteResource
 
 # XXX very very ugly
 builtins.SCREENS = {}
@@ -19,7 +20,8 @@ api = flask.ext.restful.Api(app)
 
 resources = [
     CameraResource, CameraListResource,
-    ScreenResource, ScreenListResource
+    ScreenResource, ScreenListResource,
+    RouteResource
 ]
 for resource in resources:
     api.add_resource(resource, resource.endpoint)
@@ -36,7 +38,7 @@ def main():
     logging.getLogger('werkzeug').setLevel(logging.ERROR)
     port = 5000
     logger.info("Starting server on port %s", 5000)
-    app.run(port=port, debug=True)
+    app.run(port=port, debug=False)
 
 if __name__ == '__main__':
     main()
