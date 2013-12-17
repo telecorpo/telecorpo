@@ -1,3 +1,4 @@
+import atexit
 import json
 import requests
 
@@ -7,11 +8,11 @@ from tc       import utils
 from tc.utils import TelecorpoException
 
 logger = utils.get_logger(__name__)
+
 class Client:
     def __init__(self, url_endpoint, name, server_addr, server_port):
         self.id = None
         self.name = name
-        self.rtp_port = utils.find_free_port()
         self.http_port = utils.find_free_port()
         self.addr = utils.get_ip_address(server_addr, server_port)
 
@@ -24,6 +25,9 @@ class Client:
         self._disconnect_url = None
     
     def connect(self):
+        logger.debug("Attemping new connection to %s:%s", self._server_addr,
+                     self._server_port)
+
         # discover client connection URL
         url = 'http://%s:%d/%s' % (self._server_addr, self._server_port,
                                    self._url_endpoint)
@@ -36,11 +40,14 @@ class Client:
             params[k] = v
 
         try:
+            logger.debug("Posting to %s with parameters %r", url, params)
             r = requests.post(url, timeout=5, data=params)
             if not r.ok:
                 msg = "Error %d %s: %s" % (r.status_code, r.reason, r.text)
                 raise TelecorpoException(msg)
             self.id = json.loads(r.text)
+            logger.debug("Got ID %s", self.id)
+            atexit.register(self.disconnect)
         except (ConnectionError, ConnectionRefusedError, Timeout):
             msg = "Could not connect to server %s:%d" % (self._server_addr,
                                                          self._server_port)
