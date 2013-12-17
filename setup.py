@@ -3,7 +3,8 @@ setup (
     name = 'telecorpo',
     version = '0.1',
     packages = find_packages(),
-    install_requires = ['docopt', 'flask', 'flask-restful', 'requests', 'colorlog', 'ipython'],
+    install_requires = ['docopt', 'flask', 'flask-restful', 'requests', 'colorlog', 'ipython',
+        'pylint', 'pep8', 'tkinter'],
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
