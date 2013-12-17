@@ -9,7 +9,9 @@ from tc.utils import TelecorpoException
 
 logger = utils.get_logger(__name__)
 
-class Client:
+class BaseClient:
+    """Class responsible for collect user info and connect to server."""
+
     def __init__(self, url_endpoint, name, server_addr, server_port):
         self.id = None
         self.name = name

@@ -15,6 +15,27 @@ from os import path
 
 from gi.repository      import GObject, Gst, Gtk, Gdk, GdkX11, GstVideo
 
+
+
+class TelecorpoException(Exception):
+    pass
+
+
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
+def get_logger(name):
+    format = ''.join(["%(log_color)s%(levelname)-8s%(reset)s ",
+                     "%(black)s%(bold)s%(name)s%(reset)s: ",
+                      "%(message)s"])
+    handler = logging.StreamHandler()
+    handler.setFormatter(colorlog.ColoredFormatter(format))
+
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    return logger
+
+
 class VideoWindow(Gtk.Window):
 
     def __init__(self, title, queue):
@@ -51,21 +72,12 @@ class VideoWindow(Gtk.Window):
         Process(target=VideoWindow, args=(title, queue)).start()
         return queue.get(), queue
 
-
     def quit(self, window):
         Gtk.main_quit()
         self.queue.put('quit')
 
 
-class TelecorpoException(Exception):
-    pass
 
-
-class TelecorpoEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, types.SimpleNamespace):
-            return dict(obj.__dict__)
-        return json.JSONEncoder.default(self, obj)
 
 
 ipv4_re = re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
@@ -100,18 +112,6 @@ def ask(prompt, default=None, validator=lambda x: x):
         raise ValueError('Empty value')
     return validator(value) if value != '' else validator(default)
 
-
-def get_logger(name):
-    format = ''.join(["%(log_color)s%(levelname)-8s%(reset)s ",
-                     "%(black)s%(bold)s%(name)s%(reset)s: ",
-                      "%(message)s"])
-    handler = logging.StreamHandler()
-    handler.setFormatter(colorlog.ColoredFormatter(format))
-
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(handler)
-    return logger
 
 def banner():
     banner = path.join(path.dirname(__file__), 'banner.txt')

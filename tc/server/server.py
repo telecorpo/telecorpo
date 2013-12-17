@@ -4,41 +4,55 @@ import json
 import flask
 import flask.ext.restful
 
-from tc import utils
+from types import SimpleNamespace
+
 from tc.server.camera import CameraResource, CameraListResource
 from tc.server.screen import ScreenResource, ScreenListResource
-from tc.server.route  import RouteResource
+from tc.server.route import RouteResource
+from tc.utils import banner, get_logger
 
-# XXX very very ugly
+
 builtins.SCREENS = {}
 builtins.CAMERAS = {}
 builtins.ROUTES = []
 
-logger = utils.get_logger(__name__)
-app = flask.Flask(__name__)
-api = flask.ext.restful.Api(app)
 
-resources = [
-    CameraResource, CameraListResource,
-    ScreenResource, ScreenListResource,
-    RouteResource
-]
-for resource in resources:
-    api.add_resource(resource, resource.endpoint)
+LOG = get_logger(__name__)
+APP = flask.Flask(__name__)
+API = flask.ext.restful.Api(APP)
 
-@api.representation('application/json')
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, SimpleNamespace):
+            return dict(obj.__dict__)
+        return json.JSONEncoder.default(self, obj)
+
+
+@API.representation('application/json')
 def outputs_json(data, code, headers=None):
-    data = json.dumps(data, cls=utils.TelecorpoEncoder)
+    data = json.dumps(data, cls=CustomJSONEncoder)
     resp = flask.make_response(data, code)
     resp.headers.extend(headers or {})
     return resp
 
+
 def main():
-    utils.print_banner()
-    logging.getLogger('werkzeug').setLevel(logging.ERROR)
+    banner()
+
+    # register HTTP resources
+    resources = [
+        CameraResource, CameraListResource,
+        ScreenResource, ScreenListResource,
+        RouteResource
+    ]
+    for resource in resources:
+        API.add_resource(resource, resource.endpoint)
+    
+    # start server
     port = 5000
-    logger.info("Starting server on port %s", 5000)
-    app.run(port=port, debug=False)
+    LOG.info("Starting server on port %s", port)
+    APP.run(port=port, debug=True)
 
 if __name__ == '__main__':
     main()

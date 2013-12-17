@@ -72,7 +72,7 @@ class RouteResource(Resource):
         # clear, new create the route
         ROUTES.append(route)
         url = 'http://%s:%s/add' % (camera.addr, camera.http_port)
-        post(url, data=screen.__dict__)
+        r = post(url, data=screen.__dict__)
         if not r.ok:
             logger.error("Failed to create %s", route)
             logger.error("Error %d %s: %s", r.status_code, r.reason, r.text)
@@ -81,5 +81,17 @@ class RouteResource(Resource):
         # ok, success
         logger.info("Route created")
         return '', 200
+
+    def delete(self):
+        """Delte a route."""
+        logger.debug("> RoutesResource.post()")
+
+        # parse arguments
+        args = self.parser.parse_args()
+        try:
+            camera = CAMERAS[args['camera_id']]
+            screen = SCREENS[args['
+        
+
 
 
