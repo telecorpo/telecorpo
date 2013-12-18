@@ -18,7 +18,6 @@ from tc.utils import (get_logger, ask, banner, ipv4, ExitResource,
 
 
 LOG = get_logger(__name__)
-APP = flask.Flask(__name__)
 
 
 class ScreenClient(BaseClient):
@@ -35,7 +34,8 @@ def main():
     banner()
 
     # register HTTP resources
-    api = restful.Api(APP)
+    app = flask.Flask(__name__)
+    api = restful.Api(app)
     api.add_resource(ExitResource, '/exit')
 
     try: 
@@ -55,7 +55,7 @@ def main():
     # start server
     LOG.info("Listening RTP/H264 on port %s", screen.rtp_port)
     LOG.info("Listening HTTP on port %s", screen.http_port)
-    APP.run(port=screen.http_port, debug=False)
+    app.run(port=screen.http_port, debug=False)
 
 if __name__ == '__main__':
     main()
