@@ -65,7 +65,7 @@ def main():
     # register HTTP resources
     api = restful.Api(APP)
     api.add_resource(Resource, '/<string:action>')
-    api.add_resource(ExitResource, '/exit')
+    api.add_resource(ExitResource, ExitResource.endpoint)
 
     try:
         # ask user some questions and connect to server

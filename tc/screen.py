@@ -36,7 +36,7 @@ def main():
     # register HTTP resources
     app = flask.Flask(__name__)
     api = restful.Api(app)
-    api.add_resource(ExitResource, '/exit')
+    api.add_resource(ExitResource, ExitResource.endpoint) 
 
     try: 
         # ask user some questions and connect to server

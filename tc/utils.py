@@ -129,6 +129,7 @@ def cleanup(url):
 
 
 class ExitResource(Resource):
+    endpoint = '/exit'
     def delete(self):
         exit_flask()
         logger.warn("Exiting")
