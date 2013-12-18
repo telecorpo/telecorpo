@@ -13,7 +13,7 @@ from requests.exceptions import Timeout
 from flask.ext.restful import Api, Resource
 from os import path
 
-from gi.repository      import GObject, Gst, Gtk, Gdk, GdkX11, GstVideo
+from gi.repository      import GObject, Gst, Gtk, Gdk, GdkX11, GstVideo, GLib
 
 
 
@@ -38,10 +38,11 @@ def get_logger(name):
 
 class VideoWindow(Gtk.Window):
 
-    def __init__(self, title, queue):
+    def __init__(self, title, xid_queue, exit_conn):
         Gtk.Window.__init__(self, title=title)
         self.is_fullscreen = False
         
+        self.exit_conn = exit_conn
         self.connect('destroy', self.quit)
         
         # create drawing area
@@ -51,10 +52,10 @@ class VideoWindow(Gtk.Window):
         self.add(self.video)
         
         # put the drawing area Xid on queue
-        self.queue = queue
         self.show_all()
-        self.queue.put(self.video.get_property('window').get_xid())
+        xid_queue.put(self.video.get_property('window').get_xid())
         
+        GObject.timeout_add(100, self._on_check_exit)
         Gtk.main()
 
     def on_video_clicked(self, widget, event):
@@ -65,16 +66,22 @@ class VideoWindow(Gtk.Window):
             else:
                 self.fullscreen()
                 self.is_fullscreen = True
+
+    def _on_check_exit(self):
+        if self.exit_conn.poll() and self.exit_conn.recv():
+            self.quit(self)
+        return True
     
     @classmethod
-    def factory(self, title):
-        queue = Queue(1)
-        Process(target=VideoWindow, args=(title, queue)).start()
-        return queue.get(), queue
+    def factory(self, title, exit_conn):
+        xid_queue = Queue(1)
+        proc = Process(target=VideoWindow, args=(title, xid_queue, exit_conn))
+        proc.start()
+        return proc, xid_queue.get()
 
     def quit(self, window):
         Gtk.main_quit()
-        self.queue.put('quit')
+        self.exit_conn.send(True)
 
 
 

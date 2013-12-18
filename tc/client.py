@@ -1,13 +1,22 @@
 import atexit
+import flask
+import flask.ext.restful
 import json
+import multiprocessing
 import requests
 
 from requests import ConnectionError, Timeout
 
 from tc       import utils
 from tc.utils import TelecorpoException
+from tc.streaming import Streamer
+
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop, PeriodicCallback
 
 logger = utils.get_logger(__name__)
+LOG = utils.get_logger(__name__)
 
 class BaseClient:
     """Class responsible for collect user info and connect to server."""
@@ -70,4 +79,47 @@ class BaseClient:
             msg = ("Failed to disconnect, server may be in inconsistent state."
                    " You MUST notify the developer IF the server wasn't shutdown.")
             raise TelecorpoException(msg)
+
+
+
+class WebApp(multiprocessing.Process):
+
+    def __init__(self, name, exit_conn, port, resources):
+        super().__init__()
+
+        self.app = flask.Flask(name)
+        self.port = port
+        self.exit_conn = exit_conn
+        self.exit_callbacks = []
+
+        # build REST api
+        self.rest_api = flask.ext.restful.Api(self.app)
+        for resource in resources:
+            resource.exit_conn = self.exit_conn
+            self.rest_api.add_resource(resource, resource.endpoint)
+        
+        # create app context
+        with self.app.app_context() as ctx:
+            ctx.g.exit_conn = self.exit_conn
+
+        # continuously check exit_conn
+        self.periodic_cb = PeriodicCallback(self._check_exit, 100)
+
+    def on_exit(self):
+        pass
+
+    def _check_exit(self):
+        if self.exit_conn.poll() and self.exit_conn.recv():
+            IOLoop.instance().stop()
+            self.on_exit()
+    
+    def run(self):
+        http_server = HTTPServer(WSGIContainer(self.app))
+        http_server.listen(self.port)
+
+        self.periodic_cb.start()
+        self.streamer.start()
+        self.app.debug = False
+        LOG.info("Listening HTTP on port %s", self.port)
+        IOLoop.instance().start()
 

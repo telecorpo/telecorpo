@@ -1,7 +1,10 @@
+import atexit
 import builtins
 import flask
 import flask.ext.restful
 import json
+import requests
+import signal
 
 from types import SimpleNamespace
 
@@ -38,7 +41,26 @@ def outputs_json(data, code, headers=None):
 
 def main():
     banner()
-    
+
+    # exit handler
+    def _exit_handler(signum, stackframe):
+        clients = []
+        clients += CAMERAS.values()
+        clients += SCREENS.values()
+
+        for client in clients:
+            url = 'http://%s:%s/exit' % (client.addr, client.http_port)
+            print(url)
+            r = requests.delete(url)
+            print(r)
+            if not r.ok:
+                LOG.error("Failed to delete %r", client)
+                LOG.error("Error %d %s: %s", r.status_code, r.reason, r.text)
+        raise SystemExit
+
+    for signum in [signal.SIGINT, signal.SIGTERM]:
+        signal.signal(signum, _exit_handler)
+
     # register HTTP resources
     resources = [
         CameraResource, CameraListResource,
