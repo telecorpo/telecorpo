@@ -22,7 +22,7 @@ class CameraResource(Resource):
     def get(self, id):
         """Return an idividual camera."""
 
-        LOG.debug("get('%s')", id)
+        LOG.debug(">> get('%s')", id)
         try:
             LOG.debug(CAMERAS[id])
             return CAMERAS[id]
@@ -32,7 +32,7 @@ class CameraResource(Resource):
 
     def delete(self, id):
         """Delete a camera."""
-        LOG.debug("delete('%s')", id)
+        LOG.debug(">> delete('%s')", id)
         
         # parse arguments
         args = self.parser.parse_args()
@@ -50,6 +50,11 @@ class CameraResource(Resource):
         LOG.debug(camera)
         LOG.info("Camera '%s' was removed from server", camera.name)
         
+        # delete associated routes
+        for route in [r for r in ROUTES if r.camera == camera.id]:
+            ROUTES.remove(route)
+            LOG.info("Removed %s", route)
+
         # send a exit message to camera
         if close_camera:
             delete('http://%s:%s' % (camera.addr, camera.http_port))

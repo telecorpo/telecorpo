@@ -82,16 +82,3 @@ class RouteResource(Resource):
         logger.info("Route created")
         return '', 200
 
-    def delete(self):
-        """Delte a route."""
-        logger.debug("> RoutesResource.post()")
-
-        # parse arguments
-        args = self.parser.parse_args()
-        try:
-            camera = CAMERAS[args['camera_id']]
-            screen = SCREENS[args['
-        
-
-
-

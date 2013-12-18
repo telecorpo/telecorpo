@@ -48,6 +48,21 @@ class ScreenResource(Resource):
         screen = SCREENS.pop(id)
         LOG.debug(screen)
         LOG.info("Screen '%s' was removed from server", screen.name)
+        
+        # delete associated routes
+        for route in [r for r in ROUTES if r.screen == screen.id]:
+            print(route.camera)
+            camera = CAMERAS[route.camera]
+            ROUTES.remove(route)
+            r = post('http://%s:%s/remove', data={
+                'addr': camera.addr,
+                'rtp_port': camera.rtp_port
+            })
+            if not r.ok:
+                LOG.error("Could not remove associated route %r", route)
+                LOG.error("Error %d %s: %s" % (r.status_code, r.reason, r.text))
+            else:
+                LOG.info("Removed associated route %r", route)
 
         # send an exit message to screen
         if close_screen:
