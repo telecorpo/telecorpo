@@ -1,8 +1,7 @@
 import builtins
-import logging
-import json
 import flask
 import flask.ext.restful
+import json
 
 from types import SimpleNamespace
 
@@ -39,7 +38,7 @@ def outputs_json(data, code, headers=None):
 
 def main():
     banner()
-
+    
     # register HTTP resources
     resources = [
         CameraResource, CameraListResource,
