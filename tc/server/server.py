@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 from tc.server.camera import CameraResource, CameraListResource
 from tc.server.screen import ScreenResource, ScreenListResource
-from tc.server.route import RouteResource
+from tc.server.route import RouteResource, RouteListResource
 from tc.utils import banner, get_logger
 
 
@@ -65,11 +65,11 @@ def main():
     resources = [
         CameraResource, CameraListResource,
         ScreenResource, ScreenListResource,
-        RouteResource
+        RouteResource, RouteListResource
     ]
     for resource in resources:
         API.add_resource(resource, resource.endpoint)
-    
+
     # start server
     port = 5000
     LOG.info("Starting server on port %s", port)

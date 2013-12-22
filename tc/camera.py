@@ -2,36 +2,22 @@
     tc.camera
     ~~~~~~~~~
 
-    Main camera module.
+    Camera module.
 """
 
-import flask
 import multiprocessing
-import queue
-import sys
-import tornado.web
 
+from gi.repository import Gst
 from flask.ext import restful
 from flask.ext.restful import reqparse
 
-from tc.client import BaseClient, WebApp
-from tc.streaming import Streamer
-from tc.utils import get_logger, ask, banner, ipv4, ExitResource, VideoWindow
+from tc.client import (Connection, WebInterface, VideoWindow, BaseStreaming,
+                       Actions, TelecorpoException)
+from tc.utils import get_logger, ask, banner, ipv4
+
 
 LOG = get_logger(__name__)
-
-class CameraClient(BaseClient):
-    def __init__(self):
-        src = 'videotestsrc pattern=snow '
-        src += '! video/x-raw,format=I420,framerate=30/1,width=480,heigth=360'
-
-        srv_addr = ask('Server address > ', '127.0.0.1', ipv4)
-        srv_port = ask('Server port    > ', 5000, int)
-        self.source = ask('Source element > ', src)
-        cam_name = ask('Camera name    > ')
-        print()
-
-        super().__init__('cameras', cam_name, srv_addr, srv_port)
+ACTIONS = multiprocessing.Queue()
 
 
 class Resource(restful.Resource):
@@ -42,9 +28,6 @@ class Resource(restful.Resource):
     parser.add_argument('addr', type=ipv4, required=True)
     parser.add_argument('rtp_port', type=int,  required=True)
 
-    def get(self, action):
-        return action, 200
-
     def post(self, action):
         args = self.parser.parse_args()
         addr = args['addr']
@@ -52,63 +35,83 @@ class Resource(restful.Resource):
 
         if action == 'add':
             LOG.info("Streaming to %s:%d", addr, port)
-            flask.g.streamer.add_client(addr, port)
+            ACTIONS.put((Actions.ADD_CAMERA_CLIENT, (addr, port)))
 
         elif action == 'remove':
             LOG.info("Stopping streaming to %s on port %d", addr, port)
-            flask.g.streamer.remove_client(addr, port)
+            ACTIONS.put((Actions.RM_CAMERA_CLIENT, (addr, port)))
 
         else:
             LOG.error("Unknow action '%s'", action)
             restful.abort(404)
         return '', 200
-    
-    def delete(self, action):
-        LOG.warn("Exiting")
-        IOLoop.instance().stop()
-        self.exit_conn.send(True)
 
 
-class CameraWebApp(WebApp):
+class Streamer(BaseStreaming):
 
-    def __init__(self, camera, xid, exit_conn):
-        self.camera = camera
-        super().__init__(camera.name, exit_conn, camera.http_port, [Resource,])
-        self.streamer = Streamer(camera.source, xid)
-        with self.app.app_context() as ctx:
-            ctx.g.streamer = self.streamer
+    def __init__(self, source, exit, actions):
+        pipeline = Gst.parse_launch("""
+            %s ! tee name=t
+                 t. ! queue ! x264enc tune=zerolatency ! rtph264pay
+                    ! multiudpsink name=hd
+                 t. ! queue ! xvimagesink
+        """ % source)
+        super().__init__(pipeline, exit, actions, name='Streamer')
 
-    def on_exit(self):
-        self.streamer.stop()
+        self.hdsink = self.pipeline.get_by_name('hd')
+        self.hdsink.set_property('sync', True)
+        self.hdsink.set_property('send-duplicates', False)
+
+        self.add_callback(Actions.ADD_CAMERA_CLIENT, self.add_client)
+        self.add_callback(Actions.RM_CAMERA_CLIENT, self.remove_client)
+
+    def add_client(self, addr, port):
+        """Start streaming to new client."""
+        LOG.info("Start streaming to %s:%d", addr, port)
+        self.hdsink.emit('add', addr, port)
+
+    def remove_client(self, addr, port):
+        """Stop streaming to client."""
+        LOG.info("Stop streaming to %s:%d", addr, port)
+        self.hdsink.emit('remove', addr, port)
 
 
 def main():
     banner()
 
-    http_conn, gui_conn = multiprocessing.Pipe()
-    
+    source = """
+        videotestsrc pattern=ball
+        ! video/x-raw,format=I420,framerate=30/1,width=480,heigth=360
+    """
+
     try:
-        # ask user some questions and connect to server
-        camera = CameraClient()
-        camera.connect()
+        srv_addr = ask('Server address > ', '127.0.0.1', ipv4)
+        srv_port = ask('Server port    > ', 5000, int)
+        source   = ask('Source element > ', source)
+        cam_name = ask('Camera name    > ')
+        print()
+    except Exception as ex:
+        LOG.fatal(str(ex))
+        raise SystemExit
 
-        # create video window process
-        gui_proc, xid = VideoWindow.factory(camera.name, gui_conn)
+    exit = multiprocessing.Event()
 
-        # create webapp (and streamer) process
-        # http_proc = WebAppFlask(__name__, http_conn, camera.http_port,
-        #                         [Resource,], camera.source, xid)
-        http_proc = CameraWebApp(camera, xid, http_conn)
-        http_proc.start()
+    url_format = 'http://{addr}:{port}/cameras/{name}'
+    connection = Connection(cam_name, srv_addr, srv_port, url_format, exit)
 
-    except Exception as e:
-        LOG.error(e)
-        raise e
-        sys.exit(1)
-    
-    http_proc.join()
-    gui_proc.join()
+    streamer_proc = Streamer(source, exit, ACTIONS)
+    window_proc = VideoWindow(cam_name, exit, ACTIONS)
+    http_proc = WebInterface(connection.http_port, [Resource,], exit, ACTIONS)
 
+    connection.connect()
+    procs = [streamer_proc, window_proc, http_proc]
+
+    for proc in procs:
+        proc.start()
+
+    for proc in procs:
+        proc.join()
 
 if __name__ == '__main__':
     main()
+

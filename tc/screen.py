@@ -6,56 +6,60 @@
 """
 
 import flask
+import multiprocessing
 import sys
 
+from gi.repository import Gst
 from flask.ext import restful
 from flask.ext.restful import reqparse
 
-from tc.client import BaseClient
-from tc.streaming import Receiver
-from tc.utils import (get_logger, ask, banner, ipv4, ExitResource,
-                      VideoWindow, find_free_port)
-
+from tc.utils import get_logger, ask, banner, ipv4
+from tc.client import (Connection, WebInterface, VideoWindow, BaseStreaming,
+                       Actions, TelecorpoException)
 
 LOG = get_logger(__name__)
 
 
-class ScreenClient(BaseClient):
-    def __init__(self):
-        srv_addr = ask('Server address > ', '127.0.0.1', ipv4)
-        srv_port = ask('Server port    > ', 5000, int)
-        scr_name = ask('Screen name    > ')
-        print()
-        super().__init__('screens', scr_name, srv_addr, srv_port)
-        self.rtp_port = find_free_port()
-     
+class Receiver(BaseStreaming):
+
+    def __init__(self, port, exit, actions):
+        pipeline = Gst.parse_launch("""
+            udpsrc port=%d caps=application/x-rtp ! rtpjitterbuffer
+                ! rtph264depay ! decodebin ! xvimagesink
+        """ % port)
+        super().__init__(pipeline, exit, actions, name='Receiver')
+
 
 def main():
     banner()
 
-    # register HTTP resources
-    app = flask.Flask(__name__)
-    api = restful.Api(app)
-    api.add_resource(ExitResource, ExitResource.endpoint) 
-
-    try: 
-        # ask user some questions and connect to server
-        screen = ScreenClient()
-        screen.connect()
-
-        # create video window and start listening for a stream
-        xid, queue = VideoWindow.factory(screen.name)
-        receiver = Receiver(screen.rtp_port, xid)
-        receiver.start()
-
-    except Exception as e:
-        LOG.error(e)
+    try:
+        srv_addr = ask('Server address > ', '127.0.0.1', ipv4)
+        srv_port = ask('Server port    > ', 5000, int)
+        scr_name = ask('Screen name    > ')
+        print()
+    except Exception as ex:
+        LOG.fatal(str(ex))
         sys.exit(1)
-    
-    # start server
-    LOG.info("Listening RTP/H264 on port %s", screen.rtp_port)
-    LOG.info("Listening HTTP on port %s", screen.http_port)
-    app.run(port=screen.http_port, debug=False)
+
+    exit = multiprocessing.Event()
+    actions = multiprocessing.Queue()
+
+    url_format = 'http://{addr}:{port}/screens/{name}'
+    connection = Connection(scr_name, srv_addr, srv_port, url_format, exit)
+
+    receiver_proc = Receiver(connection.rtp_port, exit, actions)
+    window_proc = VideoWindow(scr_name, exit, actions)
+    http_proc = WebInterface(connection.http_port, [], exit, actions)
+
+    connection.connect()
+    procs = [receiver_proc, window_proc, http_proc]
+
+    for proc in procs:
+        proc.start()
+
+    for proc in procs:
+        proc.join()
 
 if __name__ == '__main__':
     main()

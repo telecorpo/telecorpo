@@ -4,16 +4,12 @@ import flask
 import json
 import logging
 import re
+import requests
 import socket
-import types
 
-from multiprocessing    import Process, Queue
 from requests import post, delete
 from requests.exceptions import Timeout
-from flask.ext.restful import Api, Resource
 from os import path
-
-from gi.repository      import GObject, Gst, Gtk, Gdk, GdkX11, GstVideo, GLib
 
 
 
@@ -21,11 +17,10 @@ class TelecorpoException(Exception):
     pass
 
 
-logging.getLogger('werkzeug').setLevel(logging.ERROR)
-
 def get_logger(name):
     format = ''.join(["%(log_color)s%(levelname)-8s%(reset)s ",
-                     "%(black)s%(bold)s%(name)s%(reset)s: ",
+                      "%(black)s%(bold)s%(name)s%(reset)s:%(lineno)s ",
+                      "(%(black)s%(bold)s%(processName)s%(reset)s): ",
                       "%(message)s"])
     handler = logging.StreamHandler()
     handler.setFormatter(colorlog.ColoredFormatter(format))
@@ -36,55 +31,8 @@ def get_logger(name):
     return logger
 
 
-class VideoWindow(Gtk.Window):
-
-    def __init__(self, title, xid_queue, exit_conn):
-        Gtk.Window.__init__(self, title=title)
-        self.is_fullscreen = False
-        
-        self.exit_conn = exit_conn
-        self.connect('destroy', self.quit)
-        
-        # create drawing area
-        self.video = Gtk.DrawingArea()
-        self.video.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
-        self.video.connect('button-press-event', self.on_video_clicked)
-        self.add(self.video)
-        
-        # put the drawing area Xid on queue
-        self.show_all()
-        xid_queue.put(self.video.get_property('window').get_xid())
-        
-        GObject.timeout_add(100, self._on_check_exit)
-        Gtk.main()
-
-    def on_video_clicked(self, widget, event):
-        if event.type == Gdk.EventType._2BUTTON_PRESS and event.button == 1:
-            if self.is_fullscreen:
-                self.unfullscreen()
-                self.is_fullscreen = False
-            else:
-                self.fullscreen()
-                self.is_fullscreen = True
-
-    def _on_check_exit(self):
-        if self.exit_conn.poll() and self.exit_conn.recv():
-            self.quit(self)
-        return True
-    
-    @classmethod
-    def factory(self, title, exit_conn):
-        xid_queue = Queue(1)
-        proc = Process(target=VideoWindow, args=(title, xid_queue, exit_conn))
-        proc.start()
-        return proc, xid_queue.get()
-
-    def quit(self, window):
-        Gtk.main_quit()
-        self.exit_conn.send(True)
-
-
-
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+LOG = get_logger(__name__)
 
 
 ipv4_re = re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
@@ -92,25 +40,6 @@ def ipv4(value):
     if not ipv4_re.search(value):
         raise ValueError("Invalid IP address: {}".format(value))
     return value
-
-
-def get_ip_address(addr, port=5000):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect((addr, port))
-        return s.getsockname()[0]
-    except socket.error:
-        raise TelecorpoException('Failed to get ip address or server is down.')
-
-
-def find_free_port():
-    # FIXME no guarantees that it will be free when you use it
-    # FIXME (may occur race conditions)
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind(('', 0))
-    port = s.getsockname()[1]
-    s.close()
-    return port
 
 
 def ask(prompt, default=None, validator=lambda x: x):
@@ -121,30 +50,24 @@ def ask(prompt, default=None, validator=lambda x: x):
 
 
 def banner():
-    banner = path.join(path.dirname(__file__), 'banner.txt')
-    print(open(banner).read())
-
-def cleanup(url):
-    logger.warn("Disconnecting from server")
-    resp = delete(url + '?close_client=false')
-    if not resp.ok:
-        logger.error(resp.reason)
-        logger.error("Failed to delete this camera, server may be in"
-                     " inconsistent state.")
-        logger.error("You MUST notify the developers if the server wasn't"
-                     " shutdown.")
+    print(open(path.join(path.dirname(__file__), 'banner.txt')).read())
 
 
-class ExitResource(Resource):
-    endpoint = '/exit'
-    def delete(self):
-        exit_flask()
-        logger.warn("Exiting")
+def _request_exception_handler(func, *args, **kw):
+    try:
+        r = func(*args, **kw)
+        if not r.ok:
+            msg = "Error {} {}: {}".format(r.status_code, r.reason, r.text)
+            raise TelecorpoException(msg)
+        return json.loads(r.text)
+    except (requests.ConnectionError, requests.Timeout,
+            TelecorpoException) as ex:
+        raise TelecorpoException(ex)
 
-def exit_flask():
-    func = flask.request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        raise RuntimeError('Not running with the Werkzeug Server')
-    func()
+def post(url, data=None, timeout=5):
+    _request_exception_handler(requests.post, url, data=(data or {}),
+                               timeout=timeout)
 
-logger = get_logger(__name__)
+def delete(url, data=None, timeout=5):
+    _request_exception_handler(requests.delete, url, data=(data or {}),
+                               timeout=timeout)
