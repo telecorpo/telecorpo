@@ -67,7 +67,7 @@ class CameraResource(Resource):
             abort(404)
 
         # delete associated routes
-        for route in [r for r in ROUTES if r.camera is cam]:
+        for route in [r for r in ROUTES if r.camera is cam.name]:
             ROUTES.remove(route)
             LOG.info("Removed %s", route)
 

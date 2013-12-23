@@ -1,9 +1,6 @@
 
 from collections        import namedtuple
-from flask.ext.restful  import reqparse, abort, Resource, types
-from requests           import delete, post
-from types              import SimpleNamespace
-from uuid               import uuid1
+from flask.ext.restful  import reqparse, Resource
 
 from tc.utils           import (get_logger, ipv4, post, delete,
                                 TelecorpoException)
@@ -20,16 +17,15 @@ class RouteResource(Resource):
     def post(self, cam_name, scr_name):
         """Create a route."""
         LOG.debug(">> post('%s', '%s')", cam_name, scr_name)
-
+        
         try:
             cam = CAMERAS[cam_name]
             scr = SCREENS[scr_name]
             route = Route(cam_name, scr_name)
         except KeyError:
-            msg = "Camera '{}' or screen '{}' not found".format(cam_name,
-                                                                scr_name)
-            LOG.error(msg)
-            abort(404, message=msg)
+            LOG.fatal("Camera '{}' or screen '{}' not found".format(cam_name,
+                                                                    scr_name))
+            raise SystemExit
 
         # take a shortcut if the route was already created
         if route in ROUTES:
@@ -48,32 +44,30 @@ class RouteResource(Resource):
                 'addr': affected_scr.addr,
                 'http_port': affected_scr.http_port
             }
-            url = 'http://{}:{}/remove'.format(affected_cam.addr,
-                                               affected_cam.http_port)
+            url = 'http://{}:{}/hd/remove'.format(affected_cam.addr,
+                                                  affected_cam.http_port)
             LOG.debug("Posting %s with data=%r", url, data)
             try:
                 post(url, data=data)
                 ROUTES.remove(affected)
             except TelecorpoException as ex:
                 LOG.error(str(ex))
-                msg = "Failed to remove {}".format(affected)
-                LOG.error(msg)
-                abort(500,  message=msg)
+                LOG.fatal("Failed to remove {}".format(affected))
+                raise SystemExit
 
-        # bad error
         elif len(affected) > 1:
-            LOG.critical("Screen '%s' is on more than one route", scr_name)
+            LOG.fatal("Screen '%s' is on more than one route", scr_name)
+            raise SystemError
 
         # clear, now create the route
         try:
-            url = 'http://{}:{}/add'.format(cam.addr, cam.http_port)
+            url = 'http://{}:{}/hd/add'.format(cam.addr, cam.http_port)
             post(url, data=scr.__dict__)
             ROUTES.append(route)
         except TelecorpoException as ex:
             LOG.error(str(ex))
-            msg = "Failed to create {}".format(route)
-            LOG.error(msg)
-            abort(500, message=msg)
+            LOG.fatal("Failed to create {}".format(route))
+            raise SystemExit
 
         # ok, success
         LOG.info("%r created", route)
