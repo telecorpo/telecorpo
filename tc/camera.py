@@ -21,40 +21,63 @@ ACTIONS = multiprocessing.Queue()
 
 
 class Resource(restful.Resource):
+    """
+    """
 
-    endpoint = '/<string:action>'
+    endpoint = '/<kind>/<action>'
 
     parser = reqparse.RequestParser()
     parser.add_argument('addr', type=ipv4, required=True)
     parser.add_argument('rtp_port', type=int,  required=True)
 
-    def post(self, action):
+    def post(self, kind, action):
         args = self.parser.parse_args()
         addr = args['addr']
         port = args['rtp_port']
-
+        
+        signal = msg = None
         if action == 'add':
-            LOG.info("Streaming to %s:%d", addr, port)
-            ACTIONS.put((Actions.ADD_CAMERA_CLIENT, (addr, port)))
+            msg = "Streaming {} to %s:%d".format(kind.upper())
+            if kind == 'hd':
+                signal = Actions.ADD_HD_CAMERA_CLIENT
+            elif kind == 'ld':
+                signal = Actions.ADD_LD_CAMERA_CLIENT
 
         elif action == 'remove':
-            LOG.info("Stopping streaming to %s on port %d", addr, port)
-            ACTIONS.put((Actions.RM_CAMERA_CLIENT, (addr, port)))
+            msg = "Stop {} streaming to %s:%d".format(kind.upper())
+            if kind == 'hd':
+                signal = Actions.RM_HD_CAMERA_CLIENT
+            elif kind == 'ld':
+                signal = Actions.RM_LD_CAMERA_CLIENT
 
-        else:
-            LOG.error("Unknow action '%s'", action)
+        if not (signal and msg):
+            LOG.error("Unknow action '%s' or kind '%s'", action, kind)
             restful.abort(404)
+
+        LOG.info(msg)
+        ACTIONS.put((signal, (addr, port)))
         return '', 200
 
 
 class Streamer(BaseStreaming):
+    """
+    A streamer is an object that capture from a video source, transcode to
+    H264 in low and high definition, and stream to multiple destinations using
+    RTP.
+
+    :param source: the gstreamer source element.
+    :param exit: exit event.
+    :param actions: global actions queue.
+    """
 
     def __init__(self, source, exit, actions):
         pipeline = Gst.parse_launch("""
             %s ! tee name=t
-                 t. ! queue ! x264enc tune=zerolatency ! rtph264pay
+                t. ! queue ! x264enc tune=zerolatency ! rtph264pay
                     ! multiudpsink name=hd
-                 t. ! queue ! xvimagesink
+                t. ! queue ! x264enc tune=zerolatency ! rtph264pay
+                    ! multiudpsink name=ld
+                t. ! queue ! xvimagesink
         """ % source)
         super().__init__(pipeline, exit, actions, name='Streamer')
 
@@ -62,25 +85,41 @@ class Streamer(BaseStreaming):
         self.hdsink.set_property('sync', True)
         self.hdsink.set_property('send-duplicates', False)
 
-        self.add_callback(Actions.ADD_CAMERA_CLIENT, self.add_client)
-        self.add_callback(Actions.RM_CAMERA_CLIENT, self.remove_client)
+        self.ldsink = self.pipeline.get_by_name('ld')
+        self.ldsink.set_property('sync', True)
+        self.ldsink.set_property('send-duplicates', False)
 
-    def add_client(self, addr, port):
-        """Start streaming to new client."""
-        LOG.info("Start streaming to %s:%d", addr, port)
+        self.add_callback(Actions.ADD_HD_CAMERA_CLIENT, self.add_hd_client)
+        self.add_callback(Actions.ADD_LD_CAMERA_CLIENT, self.add_ld_client)
+        self.add_callback(Actions.RM_HD_CAMERA_CLIENT, self.remove_hd_client)
+        self.add_callback(Actions.RM_LD_CAMERA_CLIENT, self.remove_ld_client)
+
+    def add_hd_client(self, addr, port):
+        """Start HD streaming to new client."""
+        LOG.info("Start HD streaming to %s:%d", addr, port)
         self.hdsink.emit('add', addr, port)
 
-    def remove_client(self, addr, port):
-        """Stop streaming to client."""
+    def add_ld_client(self, addr, port):
+        """Start LD streaming to new client."""
+        LOG.info("Start LD streaming to %s:%d", addr, port)
+        self.ldsink.emit('add', addr, port)
+
+    def remove_hd_client(self, addr, port):
+        """Stop HD streaming to client."""
         LOG.info("Stop streaming to %s:%d", addr, port)
         self.hdsink.emit('remove', addr, port)
+
+    def remove_ld_client(self, addr, port):
+        """Stop LD streaming to client."""
+        LOG.info("Stop streaming to %s:%d", addr, port)
+        self.ldsink.emit('remove', addr, port)
 
 
 def main():
     banner()
 
     source = """
-        videotestsrc pattern=ball
+        videotestsrc pattern=smpte
         ! video/x-raw,format=I420,framerate=30/1,width=480,heigth=360
     """
 

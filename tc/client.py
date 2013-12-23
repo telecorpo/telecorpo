@@ -12,8 +12,9 @@ import multiprocessing
 import queue
 import socket
 import time
+import tkinter as tk # require tcl8.5.15 see http://bugs.python.org/issue5527
 
-from gi.repository import GObject, Gst, Gdk, GLib
+from gi.repository import GObject, Gst, Gdk, GLib, GstVideo # GstVideo required for set_window_handle
 from tornado import wsgi, httpserver, ioloop
 
 from tc.utils import get_logger, post, delete, TelecorpoException
@@ -28,19 +29,21 @@ LOG = get_logger(__name__)
 
 
 class Actions:
-    ADD_CAMERA_CLIENT = 1 # (ipaddr, rtp_port)
-    RM_CAMERA_CLIENT  = 2 # (ipaddr, rtp_port)
-    XID               = 3 # (xid_value,)
+    ADD_HD_CAMERA_CLIENT = 1 # (ipaddr, rtp_port)
+    ADD_LD_CAMERA_CLIENT = 3 # ditto
+    RM_HD_CAMERA_CLIENT  = 2 # ditto
+    RM_LD_CAMERA_CLIENT  = 4 # ditto
+    XID                  = 5 # xid_value
 
 
 class BaseProcess(multiprocessing.Process):
-    """Base process class.
-
-    Child classes must set the `exit` member event to terminate this and all
-    others :class:`BaseProcess`es instantiated with the same exit event.
+    """
+    Base process class. Childs must set the `exit` event to terminate this and
+    all others :class:`BaseProcess`es instances that share the same exit event.
     Childs must check periodically for the `exit` event and exit accordingly.
 
-    The `actions` member enqueue :class:`Actions` shared between.
+    :param exit: event that mark this process to termination.
+    :param actions: global actions queue 
     """
     def __init__(self, exit, actions, name=None):
         super().__init__(name=name)
@@ -53,7 +56,7 @@ class BaseProcess(multiprocessing.Process):
         self.actions_callbacks[action].append(cb)
 
     def run_callbacks(self, action, args):
-        """Run all registered callbacks for a given action."""
+        """Run all callbacks for a given action."""
         for cb in self.actions_callbacks[action]:
             if args == None:
                 cb()
@@ -113,6 +116,7 @@ class BaseStreaming(BaseProcess):
         LOG.debug("Stoping")
         self.pipeline.set_state(Gst.State.NULL)
 
+
 class VideoWindow(BaseProcess):
 
     def __init__(self, title, exit, actions):
@@ -121,8 +125,6 @@ class VideoWindow(BaseProcess):
         self.is_fullscreen = False
 
     def create_widgets(self):
-        # see http://bugs.python.org/issue5527
-        import tkinter as tk
         # create window
         self.root = tk.Tk()
         self.root.title(self.title)
