@@ -18,10 +18,6 @@ class RouteResource(Resource):
         """Create a route."""
         LOG.debug(">> post('%s', '%s')", cam_name, scr_name)
         
-        if kind not in ['hd', 'ld']:
-            LOG.fatal("Route kind '{}' not understood.")
-            raise SystemExit
-
         try:
             cam = CAMERAS[cam_name]
             scr = SCREENS[scr_name]
@@ -48,8 +44,10 @@ class RouteResource(Resource):
                 'addr': affected_scr.addr,
                 'http_port': affected_scr.http_port
             }
-            url = 'http://{}:{}/{}/remove'.format(affected_cam.addr,
-                                                  affected_cam.http_port, kind)
+
+            url = 'http://{}:{}/hd/remove'.format(affected_cam.addr,
+                                                  affected_cam.http_port)
+
             LOG.debug("Posting %s with data=%r", url, data)
             try:
                 post(url, data=data)
@@ -65,7 +63,7 @@ class RouteResource(Resource):
 
         # clear, now create the route
         try:
-            url = 'http://{}:{}/{}/add'.format(cam.addr, cam.http_port, kind)
+            url = 'http://{}:{}/hd/add'.format(cam.addr, cam.http_port)
             post(url, data=scr.__dict__)
             ROUTES.append(route)
         except TelecorpoException as ex:
