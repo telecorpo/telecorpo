@@ -11,9 +11,9 @@ from gi.repository import Gst
 from flask.ext import restful
 from flask.ext.restful import reqparse
 
-from tc.client import (Connection, WebInterface, VideoWindow, BaseStreaming,
-                       Actions, TelecorpoException)
-from tc.utils import get_logger, ask, banner, ipv4
+from tc.clients import (Connection, WebInterface, VideoWindow, BaseStreaming,
+                       Actions)
+from tc.utils import get_logger, ask, banner, ipv4, TCException
 
 
 LOG = get_logger(__name__)

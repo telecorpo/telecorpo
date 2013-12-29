@@ -1,20 +1,10 @@
-import atexit
 import colorlog
-import flask
-import json
 import logging
 import re
-import requests
-import socket
-
-from requests import post, delete
-from requests.exceptions import Timeout
-from os import path
 
 
-
-class TelecorpoException(Exception):
-    pass
+class TCException(Exception):
+    """Base exception class."""
 
 
 def get_logger(name):
@@ -35,11 +25,18 @@ logging.getLogger('werkzeug').setLevel(logging.ERROR)
 LOG = get_logger(__name__)
 
 
-ipv4_re = re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
+_ipv4_re = re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
 def ipv4(value):
-    if not ipv4_re.search(value):
+    if not _ipv4_re.search(value):
         raise ValueError("Invalid IP address: {}".format(value))
     return value
+
+
+def port(v):
+    v = int(v)
+    if not 1 <= v <= 65535:
+        raise ValueError("%d not in allowed port range" % v)
+    return v
 
 
 def ask(prompt, default=None, validator=lambda x: x):
@@ -50,24 +47,6 @@ def ask(prompt, default=None, validator=lambda x: x):
 
 
 def banner():
+    from os import path
     print(open(path.join(path.dirname(__file__), 'banner.txt')).read())
 
-
-def _request_exception_handler(func, *args, **kw):
-    try:
-        r = func(*args, **kw)
-        if not r.ok:
-            msg = "Error {} {}: {}".format(r.status_code, r.reason, r.text)
-            raise TelecorpoException(msg)
-        return json.loads(r.text)
-    except (requests.ConnectionError, requests.Timeout,
-            TelecorpoException) as ex:
-        raise TelecorpoException(ex)
-
-def post(url, data=None, timeout=5):
-    _request_exception_handler(requests.post, url, data=(data or {}),
-                               timeout=timeout)
-
-def delete(url, data=None, timeout=5):
-    _request_exception_handler(requests.delete, url, data=(data or {}),
-                               timeout=timeout)

@@ -2,8 +2,8 @@
 from collections        import namedtuple
 from flask.ext.restful  import reqparse, Resource
 
-from tc.utils           import (get_logger, ipv4, post, delete,
-                                TelecorpoException)
+from tc.utils import get_logger, ipv4, TCException
+from tc.utils.http import post, delete
 
 LOG = get_logger(__name__)
 Route = namedtuple('Route', 'camera screen')
@@ -52,7 +52,7 @@ class RouteResource(Resource):
             try:
                 post(url, data=data)
                 ROUTES.remove(affected)
-            except TelecorpoException as ex:
+            except TCException as ex:
                 LOG.error(str(ex))
                 LOG.fatal("Failed to remove {}".format(affected))
                 raise SystemExit
@@ -66,7 +66,7 @@ class RouteResource(Resource):
             url = 'http://{}:{}/hd/add'.format(cam.addr, cam.http_port)
             post(url, data=scr.__dict__)
             ROUTES.append(route)
-        except TelecorpoException as ex:
+        except TCException as ex:
             LOG.error(str(ex))
             LOG.fatal("Failed to create {}".format(route))
             raise SystemExit

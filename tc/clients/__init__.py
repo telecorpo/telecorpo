@@ -17,7 +17,8 @@ import tkinter as tk # require tcl8.5.15 see http://bugs.python.org/issue5527
 from gi.repository import GObject, Gst, Gdk, GLib, GstVideo # GstVideo required for set_window_handle
 from tornado import wsgi, httpserver, ioloop
 
-from tc.utils import get_logger, post, delete, TelecorpoException
+from tc.utils import get_logger, TCException
+from tc.utils.http import post, delete
 
 
 GObject.threads_init()
@@ -244,7 +245,7 @@ class Connection:
         try:
             LOG.debug("Posting %s to %s", params, self._resource_url)
             post(self._resource_url, params)
-        except TelecorpoException as ex:
+        except TCException as ex:
             LOG.fatal(str(ex))
             LOG.fatal("Could not connect to server")
             raise SystemExit
@@ -255,7 +256,7 @@ class Connection:
     def disconnect(self):
         try:
             delete(self._resource_url)
-        except TelecorpoException as ex:
+        except TCException as ex:
             msg = ("Failed to disconnect, server may be in inconsistent state."
                    " You MUST notify the developer IF the server wasn't shutdown.")
             LOG.fatal(msg)
@@ -281,6 +282,6 @@ class Connection:
             return s.getsockname()[0]
         except socket.error:
             msg = "Failed to get ip address or server is down."
-            raise TelecorpoException(msg)
+            raise TCException(msg)
 
 

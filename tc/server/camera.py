@@ -2,7 +2,8 @@
 from flask.ext.restful  import reqparse, abort, Resource, types
 from types              import SimpleNamespace
 
-from tc.utils           import get_logger, ipv4, delete, TelecorpoException
+from tc.utils import get_logger, ipv4, TCException
+from tc.utils.http import delete
 
 
 LOG = get_logger(__name__)
@@ -76,7 +77,7 @@ class CameraResource(Resource):
         try:
             delete('http://{}:{}'.format(cam.addr, cam.http_port))
             LOG.warn("Hopefully it was closed. NO guarantees")
-        except TelecorpoException:
+        except TCException:
             pass
 
         # ok, success
