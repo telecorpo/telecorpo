@@ -8,55 +8,47 @@
 import multiprocessing
 
 from gi.repository import Gst
-from flask.ext import restful
-from flask.ext.restful import reqparse
+from tornado.web import RequestHandler
 
-from tc.clients import (Connection, WebInterface, VideoWindow, BaseStreaming,
-                       Actions)
-from tc.utils import get_logger, ask, banner, ipv4, TCException
+from tc.clients import (Connection, VideoWindow, BaseStreaming,
+                       Actions, WebApplication)
+from tc.utils import get_logger, ask, banner, ipv4, port, TCException
 
 
 LOG = get_logger(__name__)
-ACTIONS = multiprocessing.Queue()
 
 
-class Resource(restful.Resource):
-    """
-    """
+class Handler(RequestHandler):
+    endpoint = r'/(hd|ld)/(add|remove)'
 
-    endpoint = '/<kind>/<action>'
-
-    parser = reqparse.RequestParser()
-    parser.add_argument('addr', type=ipv4, required=True)
-    parser.add_argument('rtp_port', type=int,  required=True)
+    def initialize(self, actions):
+        self.actions = actions
 
     def post(self, kind, action):
-        args = self.parser.parse_args()
-        addr = args['addr']
-        port = args['rtp_port']
+        try:
+            addr = ipv4(self.get_argument('addr'))
+            rtp_port = port(self.get_argument('rtp_port'))
+        except ValueError as err:
+            LOG.exception(err)
+            raise SystemExit
         
         signal = msg = None
+
         if action == 'add':
             msg = "Streaming {} to %s:%d".format(kind.upper())
             if kind == 'hd':
                 signal = Actions.ADD_HD_CAMERA_CLIENT
-            elif kind == 'ld':
+            else:
                 signal = Actions.ADD_LD_CAMERA_CLIENT
-
-        elif action == 'remove':
+        else:
             msg = "Stop {} streaming to %s:%d".format(kind.upper())
             if kind == 'hd':
                 signal = Actions.RM_HD_CAMERA_CLIENT
-            elif kind == 'ld':
+            else:
                 signal = Actions.RM_LD_CAMERA_CLIENT
-
-        if not (signal and msg):
-            LOG.error("Unknow action '%s' or kind '%s'", action, kind)
-            restful.abort(404)
-
         LOG.info(msg)
-        ACTIONS.put((signal, (addr, port)))
-        return '', 200
+        self.actions.put((signal, (addr, rtp_port)))
+        self.write('')
 
 
 class Streamer(BaseStreaming):
@@ -134,13 +126,15 @@ def main():
         raise SystemExit
 
     exit = multiprocessing.Event()
+    actions = multiprocessing.Queue()
 
     url_format = 'http://{addr}:{port}/cameras/{name}'
     connection = Connection(cam_name, srv_addr, srv_port, url_format, exit)
 
-    streamer_proc = Streamer(source, exit, ACTIONS)
-    window_proc = VideoWindow(cam_name, exit, ACTIONS)
-    http_proc = WebInterface(connection.http_port, [Resource,], exit, ACTIONS)
+    streamer_proc = Streamer(source, exit, actions)
+    window_proc = VideoWindow(cam_name, exit, actions)
+    http_proc = WebApplication(connection.http_port, [Handler,],
+                               {'actions':actions}, exit, actions)
 
     connection.connect()
     procs = [streamer_proc, window_proc, http_proc]

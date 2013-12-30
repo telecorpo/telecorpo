@@ -7,17 +7,19 @@
 
 import atexit
 import collections
-import flask
 import multiprocessing
 import queue
 import socket
 import time
 import tkinter as tk # require tcl8.5.15 see http://bugs.python.org/issue5527
 
+import tornado.web
+import tornado.ioloop
+
 from gi.repository import GObject, Gst, Gdk, GLib, GstVideo # GstVideo required for set_window_handle
 from tornado import wsgi, httpserver, ioloop
 
-from tc.utils import get_logger, TCException
+from tc.utils import get_logger, TCException, is_verbose
 from tc.utils.http import post, delete
 
 
@@ -154,59 +156,34 @@ class VideoWindow(BaseProcess):
         self.root.mainloop()
         self.exit.set()
 
+class WebApplication(BaseProcess):
 
-class WebInterface(BaseProcess):
-    """Web application process. Build, manage and terminate client HTTP
-    interface.
-    """
-
-    def __init__(self, port, resources, exit, actions):
-        """
-        Args:
-            resources: List of restful.Resource.
-            exit: Exit event.
-            actions: Global actions queue.
-        """
-        super().__init__(exit, actions, name='webinterface')
-
-        self.app = flask.Flask(__name__)
+    def __init__(self, port, handlers, init_data, exit, actions):
+        super().__init__(exit, actions, 'WebApplication')
         self.port = port
-
-        # resource for http://ipaddr:port/exit
-        class ExitResource(flask.ext.restful.Resource):
+        class ExitHandler(tornado.web.RequestHandler):
+            endpoint = r'/exit'
+            def put(self):
+                exit.set()
             def delete(self):
-                LOG.warn("Exiting")
-                ioloop.IOLoop.instance().stop()
-                self.exit.set()
-
-        # register flask-restful resources
-        self.rest_api = flask.ext.restful.Api(self.app)
-        self.rest_api.add_resource(ExitResource, '/exit')
-        for resource in resources:
-            self.rest_api.add_resource(resource, resource.endpoint)
-
-        # monkey patch flask application context
-        with self.app.app_context():
-            # FIXME dont work!
-            flask.g.actions = self.actions
-
-        # continuously check for exit
-        self.periodic_check = ioloop.PeriodicCallback(self._check_exit,
-                                                           100)
+                exit.set()
+        handlers.append(ExitHandler)
+        LOG.warn(init_data)
+        self.app = tornado.web.Application([
+            (h.endpoint, h, init_data) for h in handlers
+        ])
+        self.app.debug = is_verbose()
 
     def _check_exit(self):
         if self.exit.is_set():
             LOG.debug("Stoping")
-            ioloop.IOLoop.instance().stop()
+            tornado.ioloop.IOLoop.instance().stop()
 
     def run(self):
-        http_srv = httpserver.HTTPServer(wsgi.WSGIContainer(self.app))
-        http_srv.listen(self.port)
-
-        self.periodic_check.start()
-        self.app.debug = False
-        LOG.info("Listening HTTP on port %s", self.port)
-        ioloop.IOLoop.instance().start()
+        LOG.info("Listening HTTP on port %d", self.port)
+        self.app.listen(self.port)
+        tornado.ioloop.PeriodicCallback(self._check_exit, 100).start()
+        tornado.ioloop.IOLoop.instance().start()
 
 
 class Connection:

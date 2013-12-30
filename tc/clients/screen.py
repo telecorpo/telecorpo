@@ -1,15 +1,10 @@
-import flask
 import multiprocessing
 import sys
 
 from gi.repository import Gst
-from flask.ext import restful
-from flask.ext.restful import reqparse
-
 
 from tc.utils import get_logger, ask, banner, ipv4, TCException
-from tc.clients import (Connection, WebInterface, VideoWindow, BaseStreaming,
-                       Actions)
+from tc.clients import (Connection, WebApplication, VideoWindow, BaseStreaming)
 
 LOG = get_logger(__name__)
 
@@ -44,7 +39,7 @@ def main():
 
     receiver_proc = Receiver(connection.rtp_port, exit, actions)
     window_proc = VideoWindow(scr_name, exit, actions)
-    http_proc = WebInterface(connection.http_port, [], exit, actions)
+    http_proc = WebApplication(connection.http_port, [], {}, exit, actions)
 
     connection.connect()
     procs = [receiver_proc, window_proc, http_proc]
