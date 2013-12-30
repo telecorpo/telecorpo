@@ -68,15 +68,27 @@ class BaseProcess(multiprocessing.Process):
             else:
                 cb(args)
 
+    def run(self):
+        while not self.exit.is_set():
+            time.sleep(0.1)
+            try:
+                action, args = self.actions.get(False)
+                self.run_callbacks(action, args)
+            except queue.Empty:
+                continue
+        LOG.debug("Stoping")
 
-class BaseStreaming(BaseProcess):
-    """Manage Gstreamer pipeline."""
 
-    def __init__(self, pipeline, exit, actions, name=None):
-        super().__init__(exit, actions, name=name)
+class Streaming(BaseProcess):
+
+    def __init__(self, pipeline, title, exit, actions, name=None):
+        super().__init__(exit, actions, name)
+        self.title = title
+        self.is_fullscreen = False
         self.pipeline = pipeline
         self.xid = None
-
+    
+    def configure_pipeline(self):
         self.bus = self.pipeline.get_bus()
         self.bus.add_signal_watch()
         self.bus.connect('message::eos', self.on_eos)
@@ -85,7 +97,21 @@ class BaseStreaming(BaseProcess):
         self.bus.enable_sync_message_emission()
         self.bus.connect('sync-message::element', self.on_sync_message)
 
-        self.add_callback(Actions.XID, self.on_xid)
+    def create_widgets(self):
+        self.root = tk.Tk()
+        self.root.title(self.title)
+        self.root.protocol("WM_DELETE_WINDOW", self.exit.set)
+        # self.root.after(100, self.check_events)
+        
+        # display frame
+        self.video = tk.Frame(self.root, bg='#000000')
+        self.video.pack(expand=tk.YES, fill=tk.BOTH)
+
+        # toggle fullscreen on double click
+        self.video.bind('<Double-Button-1>', self.toggle_fullscreen)
+
+        # get XID and check for exit event
+        self.xid = self.video.winfo_id()
 
     def on_eos(self, bus, msg):
         """End of stream handler."""
@@ -101,60 +127,32 @@ class BaseStreaming(BaseProcess):
             return
         # msg.src.set_property('force-aspect-ratio', True)
         msg.src.set_window_handle(self.xid)
-        LOG.debug("xvideosink points to self.xid=%r", self.xid)
-
-    def on_xid(self, xid):
-        self.xid = xid
-        LOG.debug("Playing")
-        self.pipeline.set_state(Gst.State.PLAYING)
-
-    def run(self):
-        while not self.exit.is_set():
-            time.sleep(0.1)
-            try:
-                action, args = self.actions.get(False)
-                self.run_callbacks(action, args)
-            except queue.Empty:
-                continue
-        LOG.debug("Stoping")
-        self.pipeline.set_state(Gst.State.NULL)
-
-
-class VideoWindow(BaseProcess):
-
-    def __init__(self, title, exit, actions):
-        super().__init__(exit, actions, name='VideoWindow')
-        self.title = title
-        self.is_fullscreen = False
-
-    def create_widgets(self):
-        # create window
-        self.root = tk.Tk()
-        self.root.title(self.title)
-
-        # frame for video display
-        self.frame = tk.Frame(self.root, bg='#000000')
-        self.frame.pack(side=tk.BOTTOM, anchor=tk.S, expand=tk.YES, fill=tk.BOTH)
-
-        # enable fullscreen
-        self.frame.bind('<Double-Button-1>', self.toggle_fullscreen)
-
-        # get XID and check for exit event
-        self.actions.put((Actions.XID, self.frame.winfo_id()))
-        self.root.after(100, self.check_exit)
 
     def toggle_fullscreen(self, event):
         self.root.attributes('-fullscreen', self.is_fullscreen)
         self.is_fullscreen = not self.is_fullscreen
 
-    def check_exit(self):
+    def check_events(self):
         if self.exit.is_set():
             self.root.destroy()
 
     def run(self):
+        LOG.info("Start streaming.")
         self.create_widgets()
-        self.root.mainloop()
+        self.configure_pipeline()
+        self.pipeline.set_state(Gst.State.PLAYING)
+        while not self.exit.is_set():
+            self.root.update()
+            time.sleep(0.2)
+            try:
+                action, args = self.actions.get(False)
+                self.run_callbacks(action, args)
+            except queue.Empty:
+                continue
+        LOG.info("Start stop.")
+        self.pipeline.set_state(Gst.State.NULL)
         self.exit.set()
+
 
 class WebApplication(BaseProcess):
 
@@ -168,7 +166,6 @@ class WebApplication(BaseProcess):
             def delete(self):
                 exit.set()
         handlers.append(ExitHandler)
-        LOG.warn(init_data)
         self.app = tornado.web.Application([
             (h.endpoint, h, init_data) for h in handlers
         ])

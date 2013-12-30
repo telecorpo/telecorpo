@@ -10,8 +10,7 @@ import multiprocessing
 from gi.repository import Gst
 from tornado.web import RequestHandler
 
-from tc.clients import (Connection, VideoWindow, BaseStreaming,
-                       Actions, WebApplication)
+from tc.clients import Connection, Streaming, Actions, WebApplication
 from tc.utils import get_logger, ask, banner, ipv4, port, TCException
 
 
@@ -35,34 +34,35 @@ class Handler(RequestHandler):
         signal = msg = None
 
         if action == 'add':
-            msg = "Streaming {} to %s:%d".format(kind.upper())
+            msg = "Streaming %s to %s:%d"
             if kind == 'hd':
                 signal = Actions.ADD_HD_CAMERA_CLIENT
             else:
                 signal = Actions.ADD_LD_CAMERA_CLIENT
         else:
-            msg = "Stop {} streaming to %s:%d".format(kind.upper())
+            msg = "Stop %s streaming to %s:%d"
             if kind == 'hd':
                 signal = Actions.RM_HD_CAMERA_CLIENT
             else:
                 signal = Actions.RM_LD_CAMERA_CLIENT
-        LOG.info(msg)
+        LOG.info(msg % (kind.upper(), addr, rtp_port))
         self.actions.put((signal, (addr, rtp_port)))
         self.write('')
 
 
-class Streamer(BaseStreaming):
+class Streamer(Streaming):
     """
     A streamer is an object that capture from a video source, transcode to
     H264 in low and high definition, and stream to multiple destinations using
     RTP.
 
     :param source: the gstreamer source element.
+    :param name: streamer's name
     :param exit: exit event.
     :param actions: global actions queue.
     """
 
-    def __init__(self, source, exit, actions):
+    def __init__(self, source, name, exit, actions):
         pipeline = Gst.parse_launch("""
             %s ! tee name=t
                 t. ! queue ! x264enc tune=zerolatency ! rtph264pay
@@ -71,8 +71,17 @@ class Streamer(BaseStreaming):
                     ! multiudpsink name=ld
                 t. ! queue ! xvimagesink
         """ % source)
-        super().__init__(pipeline, exit, actions, name='Streamer')
+        title = '%s - Camera' % name
+        super().__init__(pipeline, title, exit, actions, 'Camera')
 
+
+        self.add_callback(Actions.ADD_HD_CAMERA_CLIENT, self.add_hd_client)
+        self.add_callback(Actions.ADD_LD_CAMERA_CLIENT, self.add_ld_client)
+        self.add_callback(Actions.RM_HD_CAMERA_CLIENT, self.remove_hd_client)
+        self.add_callback(Actions.RM_LD_CAMERA_CLIENT, self.remove_ld_client)
+    
+    def configure_pipeline(self):
+        super().configure_pipeline()
         self.hdsink = self.pipeline.get_by_name('hd')
         self.hdsink.set_property('sync', True)
         self.hdsink.set_property('send-duplicates', False)
@@ -80,11 +89,6 @@ class Streamer(BaseStreaming):
         self.ldsink = self.pipeline.get_by_name('ld')
         self.ldsink.set_property('sync', True)
         self.ldsink.set_property('send-duplicates', False)
-
-        self.add_callback(Actions.ADD_HD_CAMERA_CLIENT, self.add_hd_client)
-        self.add_callback(Actions.ADD_LD_CAMERA_CLIENT, self.add_ld_client)
-        self.add_callback(Actions.RM_HD_CAMERA_CLIENT, self.remove_hd_client)
-        self.add_callback(Actions.RM_LD_CAMERA_CLIENT, self.remove_ld_client)
 
     def add_hd_client(self, addr, port):
         """Start HD streaming to new client."""
@@ -105,13 +109,13 @@ class Streamer(BaseStreaming):
         """Stop LD streaming to client."""
         LOG.info("Stop streaming to %s:%d", addr, port)
         self.ldsink.emit('remove', addr, port)
-
+    
 
 def main():
     banner()
 
     source = """
-        videotestsrc pattern=smpte
+        videotestsrc pattern=ball
         ! video/x-raw,format=I420,framerate=30/1,width=480,heigth=360
     """
 
@@ -129,16 +133,15 @@ def main():
     actions = multiprocessing.Queue()
 
     url_format = 'http://{addr}:{port}/cameras/{name}'
-    connection = Connection(cam_name, srv_addr, srv_port, url_format, exit)
+    conn = Connection(cam_name, srv_addr, srv_port, url_format, exit)
 
-    streamer_proc = Streamer(source, exit, actions)
-    window_proc = VideoWindow(cam_name, exit, actions)
-    http_proc = WebApplication(connection.http_port, [Handler,],
-                               {'actions':actions}, exit, actions)
+    streamer_proc = Streamer(source, cam_name, exit, actions)
+    http_proc = WebApplication(conn.http_port, [Handler,], {'actions':actions},
+                               exit, actions)
 
-    connection.connect()
-    procs = [streamer_proc, window_proc, http_proc]
-
+    conn.connect()
+    procs = [streamer_proc, http_proc]
+    
     for proc in procs:
         proc.start()
 
