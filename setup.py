@@ -3,7 +3,7 @@ setup (
     name = 'telecorpo',
     version = '0.1',
     packages = find_packages(),
-    install_requires = ['flask', 'flask-restful', 'tornado', 'requests', 'colorlog', 'ipython', 'pylint', 'ipdb'],
+    install_requires = ['flask', 'flask-restful', 'tornado', 'requests', 'colorlog', 'ipython', 'pylint', 'ipdb', 'twisted'],
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
