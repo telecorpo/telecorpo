@@ -1,12 +1,11 @@
 
-import unittest
-import tkinter
 
-from tc.common import TCFailure
+from tc.common import TCFailure, tk
 from tc.video import *
 
+from twisted.trial import unittest
 
-class TestPipeline(unittest.TestCase):
+class PipelineTestCase(unittest.TestCase):
     def setUp(self):
         self.pipe = Pipeline("""
             videotestsrc ! fakesink name=s sync=false
@@ -27,9 +26,9 @@ class TestPipeline(unittest.TestCase):
         self.assertFalse(self.pipe.is_playing)
 
 
-class TestStreamingWindow(unittest.TestCase):
+class StreamingWindowTestCase(unittest.TestCase):
     def setUp(self):
-        self.root = tkinter.Tk()
+        self.root = tk.Tk()
         pipe = Pipeline('videotestsrc ! xvimagesink')
         self.win = StreamingWindow(self.root, pipe, 'foo')
         self.win.play()
@@ -44,6 +43,7 @@ class TestStreamingWindow(unittest.TestCase):
     
     def test_title(self):
         self.assertEqual(self.win.title, 'foo')
+        self.assertTrue(False)
 
     def test_toggle_fullscreen(self):
         # TODO Trigger <Double-Button-1> istead of use toggle_fullscreen()

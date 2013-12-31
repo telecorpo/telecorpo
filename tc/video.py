@@ -1,9 +1,9 @@
 
 import re
-import tkinter as tk
 
 from gi.repository import GObject, Gst, Gdk, GLib, GstVideo
-from tc.common import get_logger, TCFailure
+from twisted.internet import reactor
+from tc.common import get_logger, TCFailure, tk
 
 
 __ALL__ = ['Pipeline', 'StreamingWindow', 'PipelineFailure']
@@ -18,7 +18,7 @@ class PipelineFailure(TCFailure):
     pass
 
 
-class Element:
+class Element(object):
     def __init__(self, elem):
         self.__dict__['_elem'] = elem
 
@@ -38,7 +38,7 @@ class Element:
         self._elem.emit(evt, *args)
 
 
-class Pipeline:
+class Pipeline(object):
     """Parses a gstreamer pipeline and provide access to its elements events.
     
     """
@@ -83,7 +83,7 @@ class Pipeline:
         return self._is_playing
 
 
-class StreamingWindow:
+class StreamingWindow(object):
     def __init__(self, root, pipe, title):
         self.pipe = pipe
         self.pipe.bus.enable_sync_message_emission()
@@ -118,7 +118,8 @@ class StreamingWindow:
 
     def stop(self):
         self.pipe.stop()
-        self.root.destroy()
+        reactor.stop()
+        # self.root.destroy()
     
 
 

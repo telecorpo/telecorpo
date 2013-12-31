@@ -1,7 +1,9 @@
+
 import colorlog
 import logging
 import re
 import sys
+import Tkinter as tk
 
 class TCException(Exception):
     """Base exception class."""

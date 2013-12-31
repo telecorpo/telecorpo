@@ -1,9 +1,8 @@
 
-import tkinter
-import unittest
+from tc.common import tk
+from tc.camera import *
 
-from tc.camera import CameraWindow
-
+from twisted.trial import unittest
 
 class TestCameraWindow(unittest.TestCase):
 

@@ -36,8 +36,8 @@ class CameraWindow(StreamingWindow):
 
 
 if __name__ == '__main__':
-    import tkinter as tk
     from twisted.internet import tksupport, reactor
+    from tc.common import tk
     root = tk.Tk()
     tksupport.install(root)
     cam = CameraWindow(root, 'videotestsrc ! video/x-raw', 'cam1')
