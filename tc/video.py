@@ -1,6 +1,7 @@
 
 import re
 
+import gi
 from gi.repository import GObject, Gst, Gdk, GLib, GstVideo
 from twisted.internet import reactor
 from tc.common import get_logger, TCFailure, tk
@@ -9,6 +10,7 @@ from tc.common import get_logger, TCFailure, tk
 __ALL__ = ['Pipeline', 'StreamingWindow', 'PipelineFailure']
 
 
+gi.require_version('Gst', '1.0')
 GObject.threads_init()
 Gdk.threads_init()
 Gst.init(None)
@@ -53,7 +55,7 @@ class Pipeline(object):
         try:
             self._pipe = Gst.parse_launch(desc)
         except GObject.GError as err:
-            raise PipelineFailure(str(err))
+            raise PipelineFailure("%s: %s" % (err, ' '.join(desc.split())))
 
         # don't allow duplicated element names
         names = self._named_elements_re.findall(desc)
@@ -120,34 +122,4 @@ class StreamingWindow(object):
         self.pipe.stop()
         reactor.stop()
         # self.root.destroy()
-    
 
-
-
-class ScreenWindow(StreamingWindow):
-    def __init__(self, src, name, latency=200):
-        pipe = Pipeline("""
-            udpsrc port=%d caps=application/x-rtp
-                ! rtpjitterbuffer latency=%d name=buffer ! rtph264depay
-                ! decodebin ! xvimagesink""" % src)
-        title = '%s - tc-screen' % name
-        super(ScreenWindow, self).__init__(pipe, title)
-
-        self.frame.bind('<Button-4>', self._on_mouse_wheel)
-        self.frame.bind('<Button-5>', self._on_mouse_wheel)
-
-    def _on_mouse_wheel(self, evt):
-        latency = self.pipe.property('buffer', 'latency')
-        text = None
-        if evt.num == 5 and latency - 100 >= 0:
-            latency -= 100
-            text = 'decreased'
-        elif evt.num == 4:
-            latency += 100
-            text = 'increased'
-        if text:
-            self.pipe.stop()
-            self.pipe = Pipeline(self.pipe.description)
-            self.pipe.play()
-            LOG.info("Latency %s: %.1f s", text, latency/1000)
-    

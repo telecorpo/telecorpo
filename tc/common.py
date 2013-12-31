@@ -4,6 +4,7 @@ import logging
 import re
 import sys
 import Tkinter as tk
+import twisted
 
 class TCException(Exception):
     """Base exception class."""
@@ -55,4 +56,8 @@ def ask(prompt, default=None, validator=lambda x: x):
 def banner():
     from os import path
     print(open(path.join(path.dirname(__file__), 'banner.txt')).read())
+
+
+def exit():
+    twisted.stop()
 

@@ -2,11 +2,11 @@
 
 from tc.common import TCFailure, tk
 from tc.video import *
+from tc.tests import TestCase
 
-from twisted.trial import unittest
-
-class PipelineTestCase(unittest.TestCase):
+class PipelineTestCase(TestCase):
     def setUp(self):
+        TestCase.setUp(self)
         self.pipe = Pipeline("""
             videotestsrc ! fakesink name=s sync=false
         """)
@@ -26,16 +26,14 @@ class PipelineTestCase(unittest.TestCase):
         self.assertFalse(self.pipe.is_playing)
 
 
-class StreamingWindowTestCase(unittest.TestCase):
+class StreamingWindowTestCase(TestCase):
     def setUp(self):
+        TestCase.setUp(self)
         self.root = tk.Tk()
         pipe = Pipeline('videotestsrc ! xvimagesink')
         self.win = StreamingWindow(self.root, pipe, 'foo')
         self.win.play()
         self.playing = True
-
-    def step(self):
-        self.root.update()
 
     def tearDown(self):
         if self.playing:
@@ -43,7 +41,6 @@ class StreamingWindowTestCase(unittest.TestCase):
     
     def test_title(self):
         self.assertEqual(self.win.title, 'foo')
-        self.assertTrue(False)
 
     def test_toggle_fullscreen(self):
         # TODO Trigger <Double-Button-1> istead of use toggle_fullscreen()
@@ -52,15 +49,12 @@ class StreamingWindowTestCase(unittest.TestCase):
         # Double click enable fullscreen?
         # self.win.frame.event_generate('<Double-Button-1>')
         self.win._toggle_fullscreen(None)
-        self.step()
+        self.root.update()
         self.assertEqual(self.win.root.attributes('-fullscreen'), 0)
         
         # Double click again revert?
         # self.win.frame.event_generate('<Double-Button-1>')
         self.win._toggle_fullscreen(None)
-        self.step()
+        self.root.update()
         self.assertFalse(self.win.root.attributes('-fullscreen'), 1)
 
-
-class TestCamera:
-    pass

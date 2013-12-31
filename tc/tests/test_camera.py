@@ -1,14 +1,15 @@
 
 from tc.common import tk
 from tc.camera import *
+from tc.tests import TestCase
 
-from twisted.trial import unittest
 
-class TestCameraWindow(unittest.TestCase):
+class TestCameraWindow(TestCase):
 
     def setUp(self):
-        self.root = tkinter.Tk()
-        source = 'videotestsrc ! raw/x-video,width=10,height=10,framerate=25/1'
+        TestCase.setUp(self)
+        self.root = tk.Tk()
+        source = 'videotestsrc ! video/x-raw,format=I420,framerate=30/1'
         self.cam = CameraWindow(self.root, source, 'foo')
 
     def test_title(self):
