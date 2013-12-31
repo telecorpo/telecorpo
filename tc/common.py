@@ -3,9 +3,12 @@ import logging
 import re
 import sys
 
-
 class TCException(Exception):
     """Base exception class."""
+
+
+class TCFailure(RuntimeError):
+    """Suposed to stop the reactor."""
 
 
 def get_logger(name):
@@ -24,10 +27,6 @@ def get_logger(name):
 
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
 LOG = get_logger(__name__)
-
-
-def is_verbose():
-    return '-v' in sys.argv
 
 
 _ipv4_re = re.compile(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$')
