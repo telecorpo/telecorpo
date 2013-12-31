@@ -25,7 +25,7 @@ class RouteResource(Resource):
         except KeyError:
             LOG.fatal("Camera '{}' or screen '{}' not found".format(cam_name,
                                                                     scr_name))
-            raise SystemExit
+            return 'Not found', 404
 
         # take a shortcut if the route was already created
         if route in ROUTES:

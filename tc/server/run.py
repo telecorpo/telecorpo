@@ -73,7 +73,7 @@ def main():
     # start server
     port = 5000
     LOG.info("Starting server on port %s", port)
-    APP.run(port=port, debug=False)
+    APP.run(port=port, debug=True)
 
 if __name__ == '__main__':
     main()
