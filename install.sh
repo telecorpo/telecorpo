@@ -20,6 +20,6 @@ install-tc() {
 
 pyreverse-png() {
     cd $(dirname $0)
-    pyreverse tc && for f in *.dot; dot -Tpng $f -o ${f/dot/png}
+    pyreverse --ignore tests tc && for f in *.dot; dot -Tpng $f -o ${f/dot/png}
     cd -
 }
