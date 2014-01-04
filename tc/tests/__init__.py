@@ -4,6 +4,7 @@ from twisted.trial import unittest
 from twisted.spread import pb
 from twisted.test import proto_helpers
 
+from tc.server import Server
 
 class TestCase(unittest.TestCase):
     def setUp(self):
@@ -44,3 +45,25 @@ def connect(root):
     pump.pump()
 
     return clientFactory, serverFactory, pump
+
+
+class ProtocolTestCase(TestCase):
+    def setUp(self):
+        TestCase.setUp(self)
+        self.server = Server()
+        self.client = None
+        self.clientFactory, self.serverFactory, self.pump = connect(self.server)
+        d = self.clientFactory.getRootObject()
+        d.addCallback(self.gotRoot)
+        return d
+    
+    def buildClient(self, pbroot):
+        raise NotImplementedError
+
+    def gotRoot(self, pbroot):
+        self.client = self.buildClient(pbroot)
+        d = self.client.start()
+        self.pump.pump()
+        self.pump.pump()
+
+

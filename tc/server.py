@@ -33,7 +33,7 @@ class Server(pb.Root):
             raise DuplicatedName
         if kind == 'CAMERA': refs = self.cameras
         elif kind == 'MANAGER': refs = self.managers
-        elif kind == 'SCREEN': refs = self.screen
+        elif kind == 'SCREEN': refs = self.screens
         else:
             raise ValueError("kind must be CAMERA, MANAGER or SCREEN")
         refs[name] = ClientRef(name, kind, obj)

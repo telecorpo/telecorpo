@@ -1,27 +1,29 @@
 
 from twisted.internet import protocol, reactor
 from twisted.protocols import basic
+from zope import interface
 
-from tc.common import get_logger
+from tc.equipment import IEquipment, ReferenceableEquipment
 from tc.video import StreamingWindow, Pipeline
 
 
-LOG = get_logger(__name__)
 
+class ScreenEquipment(StreamingWindow):
+    interface.implements(IEquipment)
 
-class ScreenWindow(StreamingWindow):
-
+    kind = 'SCREEN'
     _description = """
         udpsrc port=%d caps=application/x-rtp
             ! rtpjitterbuffer latency=%d name=buffer ! rtph264depay
             ! decodebin ! xvimagesink
     """ 
 
-    def __init__(self, root, port, name, latency=200):
+    def __init__(self, tkroot, port, name, latency=0):
         pipe = Pipeline(self._description % (port, latency))
         title = '%s - tc-screen' % name
-        super(ScreenWindow, self).__init__(root, pipe, title)
+        StreamingWindow.__init__(self, tkroot, pipe, title)
         self.port = port
+        self.name = name
 
         self.frame.bind('<Button-4>', self._on_mouse_wheel)
         self.frame.bind('<Button-5>', self._on_mouse_wheel)
@@ -29,13 +31,21 @@ class ScreenWindow(StreamingWindow):
     def _on_mouse_wheel(self, evt):
         latency = self.pipe.buffer.latency
         text = None
-        if evt.num == 5 and latency - 100 >= 0:
-            latency -= 100
-            text = 'decreased'
+        if evt.num == 5:
+            self.changeLantency(-100)
         elif evt.num == 4:
-            latency += 100
-            text = 'increased'
-        if text:
-            self.pipe.stop()
-            self.pipe = Pipeline(self._description % (self.port, latency))
-            self.pipe.start()
+            self.changeLantency(+100)
+
+    def changeLantency(self, delta):
+        latency = self.pipe.buffer.latency + delta
+        if latency < 0:
+            latency = 0
+        self.pipe.stop()
+        self.pipe = Pipeline(self._description % (self.port, latency))
+        self.pipe.start()
+        
+
+class ReferenceableScreenEquipment(ReferenceableEquipment):
+
+    def test_changeLatency(self, delta):
+        self.thing.changeLatency(delta)

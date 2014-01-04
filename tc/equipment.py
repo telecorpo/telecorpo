@@ -18,21 +18,22 @@ class IEquipment(interface.Interface):
 class ReferenceableEquipment(pb.Referenceable):
     interface.implements(IEquipment)
 
-    def __init__(self, thing, server):
+    def __init__(self, thing, pbroot):
         if not IEquipment.providedBy(thing):
             raise ValueError("thing or connection not provides IEquipment")
         self.name = thing.name
         self.kind = thing.kind
 
         self.thing = thing
-        self.server = server
+        self.pbroot = pbroot
     
     def connect(self):
-        d = self.server.callRemote("register", self.kind, self.name, self)
+        d = self.pbroot.callRemote("register", self.kind, self.name, self)
         def onError(err):
             err.trap(DuplicatedName)
             self.remote_purge()
         d.addErrback(onError)
+        return d
 
     def remote_purge(self):
         """Connection closed by server."""
@@ -41,9 +42,10 @@ class ReferenceableEquipment(pb.Referenceable):
         reactor.stop()
 
     def start(self):
-        self.connect()
         self.thing.start()
+        d = self.connect()
+        return d
 
     def stop(self):
-        self.server.callRemote("unregister", self.name)
+        self.pbroot.callRemote("unregister", self.name)
         self.remote_purge()

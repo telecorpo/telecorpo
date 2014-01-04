@@ -19,7 +19,7 @@ class DummyEquipment:
     def stop(s): pass
 
 
-class ReferenceableEquipmentRegistrationTestCase(TestCase):
+class TestReferenceableEquipmentRegistration(TestCase):
     def test_registration(self):
         server_orig = Server()
         client, server, pump = connect(server_orig)
