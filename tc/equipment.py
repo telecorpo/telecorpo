@@ -1,6 +1,8 @@
 from twisted.spread import pb
 from zope import interface
 
+from tc.exceptions import DuplicatedName
+
 
 __ALL__ = ['IEquipment', 'ReferenceableEquipment']
 
@@ -26,7 +28,11 @@ class ReferenceableEquipment(pb.Referenceable):
         self.server = server
     
     def connect(self):
-        self.server.callRemote("register", self.kind, self.name, self)
+        d = self.server.callRemote("register", self.kind, self.name, self)
+        def onError(err):
+            err.trap(DuplicatedName)
+            self.remote_purge()
+        d.addErrback(onError)
 
     def remote_purge(self):
         """Connection closed by server."""

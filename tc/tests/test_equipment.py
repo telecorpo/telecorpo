@@ -5,7 +5,7 @@ from twisted.internet import protocol, reactor
 from twisted.protocols import policies
 from zope.interface import implements
 
-from tc.broker import Server
+from tc.server import Server
 from tc.equipment import IEquipment, ReferenceableEquipment
 from tc.tests import TestCase, IOPump, connect
 
@@ -25,17 +25,32 @@ class ReferenceableEquipmentRegistrationTestCase(TestCase):
         client, server, pump = connect(server_orig)
         d = client.getRootObject()
         def gotRoot(root):
+            # create equipment
             dummy = DummyEquipment('foo@a', 'CAMERA')
             dummy.start = MagicMock()
             dummy.stop = MagicMock()
             r = ReferenceableEquipment(dummy, root)
             r.start()
-            pump.pump()
+            pump.pump() # remote call "register"
+
+            # it was inserted on server?
             self.assertTrue('foo@a' in server_orig.cameras)
+
+            # create equipment with duplicated name
+            r2 = ReferenceableEquipment(DummyEquipment('foo@a', 'SCREEN'), root)
+            r2.start()
+            pump.pump() # remote call "register"
+            pump.pump() # DuplicatedName exception
+
+            # reactor.stop called on duplicated equipment
+            self.assertEqual(reactor.stop.call_count, 1)
+            
+            # stop working equipment
             r.stop()
-            pump.pump()
+            pump.pump() # remote call "purge"
+
             self.assertFalse('foo@a' in server_orig.cameras)
-            self.assertTrue(reactor.stop.called)
+            self.assertEqual(reactor.stop.call_count, 2)
             self.assertTrue(dummy.start.called)
             self.assertTrue(dummy.stop.called)
         d.addCallback(gotRoot)

@@ -2,14 +2,7 @@
 from itertools import chain
 from twisted.spread import pb
 
-
-
-class NotFound(pb.Error):
-    pass
-
-
-class DuplicatedName(pb.Error):
-    pass
+from tc.exceptions import NotFound, DuplicatedName
 
 
 class ClientRef(object):
