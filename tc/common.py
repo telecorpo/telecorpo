@@ -1,5 +1,4 @@
 
-import colorlog
 import logging
 import re
 import sys
@@ -20,7 +19,7 @@ def get_logger(name):
                       "(%(black)s%(bold)s%(processName)s%(reset)s): ",
                       "%(message)s"])
     handler = logging.StreamHandler()
-    handler.setFormatter(colorlog.ColoredFormatter(format))
+    # handler.setFormatter(colorlog.ColoredFormatter(format))
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
