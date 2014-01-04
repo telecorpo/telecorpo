@@ -1,8 +1,9 @@
 
+from twisted.test import proto_helpers
+
 from tc.common import tk
-from tc.screen import ScreenWindow
-from tc.tests import TestCase
-from tc.video import Pipeline
+from tc.screen import *
+from tc.tests import TestCase, reactor
 
 class TestScreenWindow(TestCase):
     def setUp(self):

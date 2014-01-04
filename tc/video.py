@@ -19,7 +19,6 @@ Gst.init(None)
 class PipelineFailure(TCFailure):
     pass
 
-
 class Element(object):
     def __init__(self, elem):
         self.__dict__['_elem'] = elem
@@ -63,33 +62,33 @@ class Pipeline(object):
             raise PipelineFailure("Duplicate element '%s'" % name)
 
         self.bus = self._pipe.get_bus()
-        self._is_playing = False
+        self._is_started = False
     
     def __getattr__(self, name):
         """Provides attribute access for pipeline elements."""
         name = name.replace('-', '_')
         return Element(self.__dict__['_pipe'].get_by_name(name))
 
-    def play(self):
+    def start(self):
         """Starts the pipeline."""
-        self._is_playing = True
+        self._is_started = True
         self._pipe.set_state(Gst.State.PLAYING)
 
     def stop(self):
         """Stops the pipeline."""
-        self._is_playing = False
+        self._is_started = False
         self._pipe.set_state(Gst.State.NULL)
 
     @property
-    def is_playing(self):
-        return self._is_playing
+    def is_started(self):
+        return self._is_started
 
 
 class StreamingWindow(object):
     def __init__(self, root, pipe, title):
         self.pipe = pipe
         self.pipe.bus.enable_sync_message_emission()
-        self.pipe.bus.connect('sync-message::elemen', self._on_sync)
+        self.pipe.bus.connect('sync-message::element', self._on_sync)
         
         self.root = root
         self.title = self.root.title = title
@@ -104,19 +103,21 @@ class StreamingWindow(object):
 
         # window handler
         self.xid = self.frame.winfo_id()
+        self._xid = None # trick to test XID
 
     def _on_sync(self, bus, msg):
         if msg.get_structure().get_name() != 'prepare-window-handle':
             return
         msg.src.set_property('force-aspect-ratio', True)
         msg.src.set_window_handle(self.xid)
+        self._xid = self.xid
 
     def _toggle_fullscreen(self, evt):
         self.root.attributes('-fullscreen', self._is_fullscreen)
         self._is_fullscreen = not self._is_fullscreen
     
-    def play(self):
-        self.pipe.play()
+    def start(self):
+        self.pipe.start()
 
     def stop(self):
         self.pipe.stop()

@@ -1,4 +1,7 @@
 
+from twisted.internet import protocol, reactor
+from twisted.protocols import basic
+
 from tc.common import get_logger
 from tc.video import StreamingWindow, Pipeline
 
@@ -35,5 +38,4 @@ class ScreenWindow(StreamingWindow):
         if text:
             self.pipe.stop()
             self.pipe = Pipeline(self._description % (self.port, latency))
-            self.pipe.play()
-    
+            self.pipe.start()

@@ -1,14 +1,22 @@
 
+from twisted.internet import protocol, reactor
+from twisted.protocols import basic
+from zope import interface
+
 from tc.common import get_logger
 from tc.video import Pipeline, StreamingWindow
+from tc.equipment import IEquipment
 
-__ALL__ = ['CameraWindow']
+
+__ALL__ = ['CameraWindow', 'CameraProtocol', 'CameraProtocolFactory']
 
 LOG = get_logger(__name__)
 
 
 class CameraWindow(StreamingWindow):
+    interface.implements(IEquipment)
 
+    kind = 'CAMERA'
     _description = """
         %s ! tee name=t
             t. ! queue ! x264enc tune=zerolatency ! rtph264pay
@@ -22,23 +30,16 @@ class CameraWindow(StreamingWindow):
         pipe = Pipeline(self._description % source)
         title = '%s - tc-camera' % name
         super(CameraWindow, self).__init__(root, pipe, title)
+        self.name = name
 
         # self.pipe.hdsink.sync = True
         self.pipe.hdsink.send_duplicates = False
     
-    def add_hd_client(self, addr, port):
+    def add_client(self, addr, port):
         # FIXME untested
         self.pipe.hdsink.emit('add', addr, port)
 
-    def del_hd_client(self, addr, port):
+    def del_client(self, addr, port):
         # FIXME untested
         self.pipe.hdsink.emit('remove', addr, port)
 
-
-if __name__ == '__main__':
-    from twisted.internet import tksupport, reactor
-    from tc.common import tk
-    root = tk.Tk()
-    tksupport.install(root)
-    cam = CameraWindow(root, 'videotestsrc ! video/x-raw', 'cam1')
-    reactor.run()

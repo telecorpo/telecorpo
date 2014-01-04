@@ -1,5 +1,5 @@
 
-
+from time import sleep
 from tc.common import TCFailure, tk
 from tc.video import *
 from tc.tests import TestCase
@@ -18,12 +18,12 @@ class PipelineTestCase(TestCase):
         self.pipe.s.sync = True
         self.assertEqual(self.pipe.s.sync, True)
 
-    def test_is_playing(self):
-        self.assertFalse(self.pipe.is_playing)
-        self.pipe.play()
-        self.assertTrue(self.pipe.is_playing)
+    def test_is_started(self):
+        self.assertFalse(self.pipe.is_started)
+        self.pipe.start()
+        self.assertTrue(self.pipe.is_started)
         self.pipe.stop()
-        self.assertFalse(self.pipe.is_playing)
+        self.assertFalse(self.pipe.is_started)
 
 
 class StreamingWindowTestCase(TestCase):
@@ -32,7 +32,7 @@ class StreamingWindowTestCase(TestCase):
         self.root = tk.Tk()
         pipe = Pipeline('videotestsrc ! xvimagesink')
         self.win = StreamingWindow(self.root, pipe, 'foo')
-        self.win.play()
+        self.win.start()
         self.playing = True
 
     def tearDown(self):
@@ -57,4 +57,9 @@ class StreamingWindowTestCase(TestCase):
         self.win._toggle_fullscreen(None)
         self.root.update()
         self.assertFalse(self.win.root.attributes('-fullscreen'), 1)
+    
+    def test_xid(self):
+        self.win.start()
+        sleep(.1)
+        self.assertEquals(self.win.xid, self.win._xid)
 

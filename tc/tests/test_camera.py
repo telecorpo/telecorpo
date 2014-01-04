@@ -1,11 +1,13 @@
 
+from mock import MagicMock
+from twisted.test import proto_helpers
+
 from tc.common import tk
 from tc.camera import *
-from tc.tests import TestCase
+from tc.tests import TestCase, reactor
 
 
 class TestCameraWindow(TestCase):
-
     def setUp(self):
         TestCase.setUp(self)
         self.root = tk.Tk()
@@ -16,6 +18,6 @@ class TestCameraWindow(TestCase):
         self.assertEqual(self.cam.title, 'foo - tc-camera')
 
     def test_hdsink(self):
-        # self.assertEqual(self.cam.pipe.hdsink.sync, True)
+        self.assertEqual(self.cam.pipe.hdsink.sync, True)
         self.assertEqual(self.cam.pipe.hdsink.send_duplicates, False)
 
