@@ -6,9 +6,10 @@ from tc.exceptions import NotFound, DuplicatedName
 
 
 class ClientRef(object):
-    def __init__(self, name, kind, ref):
+    def __init__(self, name, kind, ref, port=None):
         self.name = name
         self.kind = kind
+        self.port = port
         self.ref = ref
 
     @property
@@ -37,6 +38,13 @@ class Server(pb.Root):
         else:
             raise ValueError("kind must be CAMERA, MANAGER or SCREEN")
         refs[name] = ClientRef(name, kind, obj)
+
+        if kind == 'SCREEN':
+            d = obj.callRemote('getAttr', 'port')
+            def gotPort(port):
+                refs[name].port = port
+            d.addCallback(gotPort)
+            return d
 
     def remote_unregister(self, name):
         for ref in chain(self.cameras.values(), self.managers.values(),

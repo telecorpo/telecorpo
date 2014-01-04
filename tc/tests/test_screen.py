@@ -31,24 +31,32 @@ class TestScreenEquipment(TestCase):
 
     def test_changeLatency(self):
         #increase
-        self.scr.changeLantency(+40)
+        self.scr.changeLatency(+40)
         self.root.update()
         self.assertEquals(self.scr.pipe.buffer.latency, 240)
 
         # decrease
-        self.scr.changeLantency(-30)
+        self.scr.changeLatency(-30)
         self.root.update()
         self.assertEquals(self.scr.pipe.buffer.latency, 210)
 
 
 class TestReferenceableScreenEquipment(ProtocolTestCase):
+    def setUp(self):
+        ProtocolTestCase.setUp(self)
+        self.pump.pump()
+        self.pump.pump()
+
     def buildClient(self, pbroot):
         self.screen = ScreenEquipment(tk.Tk(), 1337, 'foo@ssa')
-        self.screen.changeLantency = Mock()
-        # import ipdb; ipdb.set_trace()
+        self.screen.changeLatency = Mock()
         return ReferenceableScreenEquipment(self.screen, pbroot)
 
     def test_changeLatency(self):
         d = self.server.screens['foo@ssa'].ref.callRemote('changeLatency', -3)
-        # self.screen.changeLantency.assert_called_with(-3)
+        self.pump.pump()
+        self.screen.changeLatency.assert_called_with(-3)
+
+    def test_registration(self):
+        self.assertEqual(self.server.screens['foo@ssa'].port, 1337)
         

@@ -32,11 +32,11 @@ class ScreenEquipment(StreamingWindow):
         latency = self.pipe.buffer.latency
         text = None
         if evt.num == 5:
-            self.changeLantency(-100)
+            self.changeLatency(-100)
         elif evt.num == 4:
-            self.changeLantency(+100)
+            self.changeLatency(+100)
 
-    def changeLantency(self, delta):
+    def changeLatency(self, delta):
         latency = self.pipe.buffer.latency + delta
         if latency < 0:
             latency = 0
@@ -47,5 +47,5 @@ class ScreenEquipment(StreamingWindow):
 
 class ReferenceableScreenEquipment(ReferenceableEquipment):
 
-    def test_changeLatency(self, delta):
+    def remote_changeLatency(self, delta):
         self.thing.changeLatency(delta)

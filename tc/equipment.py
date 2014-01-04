@@ -35,6 +35,9 @@ class ReferenceableEquipment(pb.Referenceable):
         d.addErrback(onError)
         return d
 
+    def remote_getAttr(self, name):
+        return getattr(self.thing, name)
+
     def remote_purge(self):
         """Connection closed by server."""
         from twisted.internet import reactor
