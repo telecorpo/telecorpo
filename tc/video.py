@@ -1,11 +1,12 @@
 
 import re
-
 import gi
+import Tkinter as tk
+
 from gi.repository import GObject, Gst, Gdk, GLib, GstVideo
 from twisted.internet import reactor
-from tc.common import get_logger, TCFailure, tk
 
+from tc.exceptions import PipelineFailure
 
 __ALL__ = ['Pipeline', 'StreamingWindow', 'PipelineFailure']
 
@@ -15,9 +16,6 @@ GObject.threads_init()
 Gdk.threads_init()
 Gst.init(None)
 
-
-class PipelineFailure(TCFailure):
-    pass
 
 class Element(object):
     def __init__(self, elem):

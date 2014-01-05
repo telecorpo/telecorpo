@@ -3,14 +3,11 @@ from twisted.internet import protocol, reactor
 from twisted.protocols import basic
 from zope import interface
 
-from tc.common import get_logger
 from tc.video import Pipeline, StreamingWindow
 from tc.equipment import IEquipment, ReferenceableEquipment
 
 
 __ALL__ = ['CameraWindow', 'CameraProtocol', 'CameraProtocolFactory']
-
-LOG = get_logger(__name__)
 
 
 class CameraEquipment(StreamingWindow):
