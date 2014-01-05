@@ -1,3 +1,5 @@
+import collections
+
 from twisted.spread import pb
 from zope import interface
 
@@ -33,8 +35,7 @@ class ReferenceableEquipment(pb.Referenceable):
             err.trap(DuplicatedName)
             self.remote_purge()
         d.addErrback(onError)
-        return d
-
+        return d 
     def remote_getAttr(self, name):
         return getattr(self.thing, name)
 
@@ -52,3 +53,12 @@ class ReferenceableEquipment(pb.Referenceable):
     def stop(self):
         self.pbroot.callRemote("unregister", self.name)
         self.remote_purge()
+
+    def __getattr__(self, name):
+        if not name.startswith('remote_'):
+            raise AttributeError
+        method = getattr(self.thing, name[7:])
+        if not isinstance(method, collections.Callable):
+            raise AttributeError
+        return method
+
