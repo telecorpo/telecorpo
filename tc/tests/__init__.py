@@ -1,14 +1,15 @@
-from mock import MagicMock
+from mock import Mock
 from twisted.internet import reactor
 from twisted.trial import unittest
 from twisted.spread import pb
 from twisted.test import proto_helpers
 
 from tc.server import Server
+from tc.equipment import ReferenceableEquipment
 
 class TestCase(unittest.TestCase):
     def setUp(self):
-        reactor.stop = MagicMock()
+        reactor.stop = Mock()
 
 
 class IOPump:
@@ -26,6 +27,9 @@ class IOPump:
         self.serverIO.clear()
         self.server.dataReceived(cData)
         self.client.dataReceived(sData)
+
+    def __call__(self):
+        self.pump()
 
 
 def connect(root):
@@ -49,21 +53,43 @@ def connect(root):
 
 class ProtocolTestCase(TestCase):
     def setUp(self):
-        TestCase.setUp(self)
-        self.server = Server()
-        self.client = None
-        self.clientFactory, self.serverFactory, self.pump = connect(self.server)
-        d = self.clientFactory.getRootObject()
-        d.addCallback(self.gotRoot)
-        return d
+        self.spbroot = Server()
+        self.pumps = []
+        self.refs = {}
+        reactor.stop = Mock()
     
-    def buildClient(self, pbroot):
-        raise NotImplementedError
+    def connect(self, equip):
+        serverFactory = pb.PBServerFactory(self.spbroot)
+        serverBroker = serverFactory.buildProtocol(())
 
-    def gotRoot(self, pbroot):
-        self.client = self.buildClient(pbroot)
-        d = self.client.start()
-        self.pump.pump()
-        self.pump.pump()
+        clientFactory = pb.PBClientFactory()
+        clientBroker = clientFactory.buildProtocol(())
 
+        clientTransport = proto_helpers.StringTransport()
+        serverTransport = proto_helpers.StringTransport()
+
+        clientBroker.makeConnection(clientTransport)
+        serverBroker.makeConnection(serverTransport)
+
+        pump = IOPump(clientBroker, serverBroker, clientTransport,
+                      serverTransport)
+        pump()
+        self.pumps.append(pump)
+        defer = self.registrate(clientFactory, equip)
+        return defer
+
+    def registrate(self, clientFactory, equip):
+        defer = clientFactory.getRootObject()
+        def gotRoot(pbroot):
+            ref = ReferenceableEquipment(equip, pbroot)
+            ref.start()
+            self.refs[ref.name] = ref
+            self.refs[ref.thing] = ref
+            self.pump()
+        defer.addCallback(gotRoot)
+        return defer
+
+    def pump(self):
+        for pump in self.pumps:
+            pump.pump()
 

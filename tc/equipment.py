@@ -12,6 +12,7 @@ __ALL__ = ['IEquipment', 'ReferenceableEquipment']
 class IEquipment(interface.Interface):
     name = interface.Attribute("""Name of equipment.""")
     kind = interface.Attribute("""Kind of equipment.""")
+    port = interface.Attribute("""Port of equipment.""")
 
     def start(): pass
     def stop(): pass
@@ -25,19 +26,19 @@ class ReferenceableEquipment(pb.Referenceable):
             raise ValueError("thing or connection not provides IEquipment")
         self.name = thing.name
         self.kind = thing.kind
+        self.port = thing.port
 
         self.thing = thing
         self.pbroot = pbroot
     
     def connect(self):
-        d = self.pbroot.callRemote("register", self.kind, self.name, self)
+        d = self.pbroot.callRemote("register", self, self.kind, self.name,
+                                   self.port)
         def onError(err):
             err.trap(DuplicatedName)
             self.remote_purge()
         d.addErrback(onError)
         return d 
-    def remote_getAttr(self, name):
-        return getattr(self.thing, name)
 
     def remote_purge(self):
         """Connection closed by server."""

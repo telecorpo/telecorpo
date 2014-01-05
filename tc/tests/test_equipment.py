@@ -1,9 +1,7 @@
 
 
-from StringIO import StringIO
 from mock import MagicMock, Mock
-from twisted.internet import protocol, reactor
-from twisted.protocols import policies
+from twisted.internet import reactor
 from zope.interface import implements
 
 from tc.server import Server
@@ -14,9 +12,10 @@ from tc.tests import TestCase, IOPump, connect
 class DummyEquipment:
     implements(IEquipment)
 
-    def __init__(self, name, kind):
+    def __init__(self, name, kind, port=1):
         self.name = name
         self.kind = kind
+        self.port = port
 
     def start(self):
         pass
@@ -30,7 +29,7 @@ class TestReferenceableEquipment(TestCase):
     def setUp(self):
         TestCase.setUp(self)
 
-        self.dummy = DummyEquipment("a@a", "CAMERA")
+        self.dummy = DummyEquipment("a@a", "CAMERA", 1)
         self.dummy.foo = Mock()
         self.dummy.bar = Mock()
 
@@ -47,10 +46,8 @@ class TestReferenceableEquipment(TestCase):
     def test_properties(self):
         self.assertEqual(self.ref.name, "a@a")
         self.assertEqual(self.ref.kind, "CAMERA")
+        self.assertEqual(self.ref.port, 1)
 
-
-
-class TestReferenceableEquipmentRegistration(TestCase):
     def test_registration(self):
         server_orig = Server()
         client, server, pump = connect(server_orig)
