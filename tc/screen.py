@@ -44,8 +44,3 @@ class ScreenEquipment(StreamingWindow):
         self.pipe = Pipeline(self._description % (self.port, latency))
         self.pipe.start()
         
-
-class ReferenceableScreenEquipment(ReferenceableEquipment):
-
-    def remote_changeLatency(self, delta):
-        self.thing.changeLatency(delta)

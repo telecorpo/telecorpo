@@ -14,6 +14,7 @@ class CameraEquipment(StreamingWindow):
     interface.implements(IEquipment)
 
     kind = 'CAMERA'
+    # port = None
     _description = """
         %s ! tee name=t
             t. ! queue ! x264enc tune=zerolatency ! rtph264pay
@@ -41,11 +42,3 @@ class CameraEquipment(StreamingWindow):
         # FIXME delClient "works" even if client wasn't previously added 
         self.pipe.hdsink.emit('remove', addr, port)
 
-
-class ReferenceableCameraEquipment(ReferenceableEquipment):
-
-    def remote_addClient(self, addr, port):
-        self.thing.addClient(addr, port)
-
-    def remote_delClient(self, addr, port):
-        self.thing.delClient(addr, port)
