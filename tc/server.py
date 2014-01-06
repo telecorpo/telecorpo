@@ -33,7 +33,7 @@ class Server(pb.Root):
             for route in list(self.routes):
                 if route[0] == name:
                     self.routes.remove(route)
-                    del self.cameras[name]
+                    # del self.cameras[name]
         elif kind == 'SCREEN':
             for route in list(self.routes):
                 if route[1] == name:
@@ -41,7 +41,7 @@ class Server(pb.Root):
                     scr = self.screens[route[1]]
                     cam.callRemote("delClient", scr.addr, scr.port)
                     self.routes.remove(route)
-                    del self.screens[name]
+                    # del self.screens[name]
 
     def remote_register(self, obj, kind, name, port):
         if name in chain(self.cameras, self.managers, self.screens):
