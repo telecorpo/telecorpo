@@ -6,6 +6,7 @@ Usage:
     tc camera NAME [-s SERVER] [-p PORT] [-i INPUT]
     tc screen NAME [-s SERVER] [-p PORT]
     tc server [-p PORT] [-t PORT]
+    tc terminal [-s SERVER] [-t PORT]
     tc -h | --help
 
 Options:
@@ -41,7 +42,12 @@ def getFreePort(addr):
     return p[1]
 
 
+
 args = docopt(__doc__)
+if args['terminal']:
+    import os
+    raise SystemExit(os.system("telnet %s %s" % (args['--server'], args['--telnet'])))
+
 if args['server']:
     server = server.Server()
 
