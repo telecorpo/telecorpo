@@ -1,9 +1,10 @@
 
+import Tkinter as tk
+
 from mock import Mock
 from twisted.test import proto_helpers
 from twisted.trial import unittest
 
-from tc.common import tk
 from tc.camera import *
 from tc.tests import TestCase, ProtocolTestCase
 

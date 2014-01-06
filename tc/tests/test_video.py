@@ -1,6 +1,7 @@
 
+import Tkinter as tk
 from time import sleep
-from tc.common import TCFailure, tk
+
 from tc.video import *
 from tc.tests import TestCase
 

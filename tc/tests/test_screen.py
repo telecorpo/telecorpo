@@ -1,7 +1,7 @@
 
+import Tkinter as tk
 
 from mock import Mock
-from tc.common import tk
 from tc.screen import *
 from tc.tests import TestCase, ProtocolTestCase
 
