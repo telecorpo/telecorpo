@@ -1,25 +1,15 @@
-#!/bin/sh
+#!/bin/bash
 
-install-tc() {
-    PYVENV=pyvenv-3.3
-    INSTALL_DIR=/opt/telecorpo
-    REPOSITORY=https://bitbucket.org/pslacerda/telecorpo.git
+cd $(dirname $0)
+pyreverse --ignore tests tc
 
-    apt-get install -y python3.3 python3-enum34 git-core \
-                       python3-gi gstreamer1.0-tools gir1.2-gstreamer-1.0 \
-                       gir1.2-gst-plugins-base-1.0 gstreamer1.0-plugins-good \
-                       gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad \
-                       gstreamer1.0-libav
+for f in *.dot
+do
+    dot -Tpng $f -o ${f/dot/png}
+    rm $f
+done
 
-    rm -rf $INSTALL_DIR
-    git clone $REPOSITORY $INSTALL_DIR
-    $PYVENV --system-site-packages $INSTALL_DIR/venv
-    . $INSTALL_DIR/venv/bin/activate
-    cd $INSTALL_DIR && python setup.py develop
-}
+mv classes_No_Name.png classes.png
+mv packages_No_Name.png packages.png
 
-pyreverse-png() {
-    cd $(dirname $0)
-    pyreverse --ignore tests tc && for f in *.dot; dot -Tpng $f -o ${f/dot/png}
-    cd -
-}
+xdg-open classes.png
