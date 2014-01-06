@@ -15,9 +15,6 @@ class TestCameraEquipment(TestCase):
         source = 'videotestsrc ! video/x-raw,format=I420,framerate=30/1'
         self.cam = CameraEquipment(self.root, source, 'foo')
 
-    def test_title(self):
-        self.assertEqual(self.cam.title, 'foo - tc-camera')
-
     def test_hdsink(self):
         self.assertEqual(self.cam.pipe.hdsink.sync, True)
         self.assertEqual(self.cam.pipe.hdsink.send_duplicates, False)

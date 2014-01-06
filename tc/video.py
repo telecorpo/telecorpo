@@ -60,12 +60,27 @@ class Pipeline(object):
             raise PipelineFailure("Duplicate element '%s'" % name)
 
         self.bus = self._pipe.get_bus()
+        self.bus.enable_sync_message_emission()
+        self.bus.connect('sync-message::element', self._on_sync)
+        
+        self.xid = None
+        self._xid = None # trick to test XID
         self._is_started = False
     
     def __getattr__(self, name):
         """Provides attribute access for pipeline elements."""
         name = name.replace('-', '_')
         return Element(self.__dict__['_pipe'].get_by_name(name))
+
+    def _on_sync(self, bus, msg):
+        if msg.get_structure().get_name() != 'prepare-window-handle':
+            return
+        msg.src.set_property('force-aspect-ratio', True)
+        msg.src.set_window_handle(self.xid)
+        self._xid = self.xid
+    
+    def setXID(self, xid):
+        self.xid = xid
 
     def start(self):
         """Starts the pipeline."""
@@ -85,11 +100,9 @@ class Pipeline(object):
 class StreamingWindow(object):
     def __init__(self, root, pipe, title):
         self.pipe = pipe
-        self.pipe.bus.enable_sync_message_emission()
-        self.pipe.bus.connect('sync-message::element', self._on_sync)
-        
         self.root = root
-        self.title = self.root.title = title
+        self.title = title
+        self.root.wm_title(title)
 
         self.frame = tk.Frame(self.root, bg='#000000')
         self.frame.pack(expand=tk.YES, fill=tk.BOTH)
@@ -101,14 +114,7 @@ class StreamingWindow(object):
 
         # window handler
         self.xid = self.frame.winfo_id()
-        self._xid = None # trick to test XID
-
-    def _on_sync(self, bus, msg):
-        if msg.get_structure().get_name() != 'prepare-window-handle':
-            return
-        msg.src.set_property('force-aspect-ratio', True)
-        msg.src.set_window_handle(self.xid)
-        self._xid = self.xid
+        self.pipe.setXID(self.xid)
 
     def _toggle_fullscreen(self, evt):
         self.root.attributes('-fullscreen', self._is_fullscreen)
@@ -120,5 +126,4 @@ class StreamingWindow(object):
     def stop(self):
         self.pipe.stop()
         reactor.stop()
-        # self.root.destroy()
 

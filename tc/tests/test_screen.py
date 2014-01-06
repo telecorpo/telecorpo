@@ -15,9 +15,6 @@ class TestScreenEquipment(TestCase):
     def tearDown(self):
         self.scr.stop()
 
-    def test_title(self):
-        self.assertEquals(self.scr.title, 'foo - tc-screen')
-
     def test_changeLatencyWithMouseWheel(self):
         # increase
         self.scr.frame.event_generate('<Button-4>')

@@ -14,7 +14,7 @@ class CameraEquipment(StreamingWindow):
     interface.implements(IEquipment)
 
     kind = 'CAMERA'
-    # port = None
+    port = None
     _description = """
         %s ! tee name=t
             t. ! queue ! x264enc tune=zerolatency ! rtph264pay

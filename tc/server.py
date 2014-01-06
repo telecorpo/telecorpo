@@ -28,11 +28,20 @@ class Server(pb.Root):
         self.screens = {}
         self.routes = []
     
-    def getCamera(self, name):
-        try:
-            return self.cameras[name]
-        except KeyError:
-            raise NotFound
+    def deleteClient(self, kind, name):
+        if kind == 'CAMERA':
+            for route in list(self.routes):
+                if route[0] == name:
+                    self.routes.remove(route)
+                    del self.cameras[name]
+        elif kind == 'SCREEN':
+            for route in list(self.routes):
+                if route[1] == name:
+                    cam = self.cameras[route[0]]
+                    scr = self.screens[route[1]]
+                    cam.callRemote("delClient", scr.addr, scr.port)
+                    self.routes.remove(route)
+                    del self.screens[name]
 
     def remote_register(self, obj, kind, name, port):
         if name in chain(self.cameras, self.managers, self.screens):
@@ -42,21 +51,13 @@ class Server(pb.Root):
         elif kind == 'SCREEN': refs = self.screens
         else:
             raise ValueError("kind must be CAMERA, MANAGER or SCREEN")
+
+        def onDisconnect(remoteRef):
+            del refs[name]
+            self.deleteClient(kind, name)
+        obj.notifyOnDisconnect(onDisconnect)
         addr = obj.broker.transport.getPeer().host
         refs[name] = ClientRef(name, kind, obj, addr, port)
-
-    def remote_unregister(self, name):
-        for ref in chain(self.cameras.values(), self.managers.values(),
-                           self.screens.values()):
-            if ref.name == name:
-                if ref.kind == 'CAMERA': refs = self.cameras
-                if ref.kind == 'MANAGER': refs = self.managers
-                if ref.kind == 'SCREEN': refs = self.screen
-                del refs[ref.name]
-                ref.ref.callRemote("purge")
-                break
-        else:
-            raise NotFound
 
     def remote_route(self, cam_name, scr_name):
         try:
@@ -77,7 +78,7 @@ class Server(pb.Root):
 
         self.routes.append((camera.name, screen.name))
         camera.ref.callRemote("addClient", screen.addr, screen.port)
-    
+
     def remote_changeLatency(self, scr_name, delta):
         try:
             screen = self.screens[scr_name]

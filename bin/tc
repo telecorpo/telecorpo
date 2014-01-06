@@ -1,0 +1,105 @@
+#!/usr/bin/env python2
+"""
+tc - Telecorpo 
+
+Usage:
+    tc camera NAME [-s SERVER] [-p PORT] [-i INPUT]
+    tc screen NAME [-s SERVER] [-p PORT]
+    tc server [-p PORT] [-t PORT]
+    tc -h | --help
+
+Options:
+    -h --help           Show this help.
+    -n --name=NAME      Client name on format 'name@site'.
+    -s --server=SERVER  Server address [default: localhost].
+    -i --input=INPUT    Camera input [default: test]. 
+    -p --port=PORT      Server port [default: 5000].
+    -t --telnet=PORT    Telnet port [default: 5001].
+
+"""
+
+import socket
+import Tkinter as tkinter
+
+from docopt import docopt
+from twisted.internet import reactor, tksupport
+from twisted.spread import pb
+from twisted.internet import reactor
+
+from tc import camera, screen, equipment, server, commander
+
+
+def abort(msg):
+    print 'Abort:', msg.strip()
+    raise SystemExit
+
+def getFreePort(addr):
+    s = socket.socket()
+    s.connect(addr)
+    p = s.getsockname()
+    s.close()
+    return p[1]
+
+
+args = docopt(__doc__)
+if args['server']:
+    server = server.Server()
+
+    server_port = int(args['--port'])
+    telnet_port = int(args['--telnet'])
+    reactor.listenTCP(server_port, pb.PBServerFactory(server))
+    reactor.listenTCP(telnet_port, commander.TerminalFactory(server))
+    reactor.run()
+    raise SystemExit
+
+name = args['NAME']
+if '@' not in name or name[0] == '@' or name[-1] == '@':
+    abort("Bad name.")
+
+server_addr = args['--server']
+server_port = int(args['--port'])
+
+try:
+    port = getFreePort((server_addr, server_port))
+except socket.error as err:
+    abort(str(err).partition("]")[2])
+
+
+
+tkroot = tkinter.Tk()
+tksupport.install(tkroot)
+
+
+factory = pb.PBClientFactory()
+reactor.connectTCP(server_addr, server_port, factory)
+
+def connectionLost(*args):
+    if reactor.running:
+        reactor.stop()
+factory.clientConnectionLost = connectionLost
+
+ref = None
+
+d = factory.getRootObject()
+def gotRoot(pbroot):
+    global ref
+    if args['screen']:
+        equip = screen.ScreenEquipment(tkroot, port, name)
+    elif args['camera']:
+        source = args['--input']
+        if source == 'test':
+            source = """videotestsrc pattern=ball
+                ! video/x-raw,format=I420,framerate=30/1,width=480,heigth=360
+            """
+        elif source in ['v4l2', 'cam', 'webcam']:
+            source = """gst-launch v4l2src
+                ! video/x-raw,format=I420,width=320,height=240,framerate=30/1
+            """
+        else:
+            raise NotImplementedError
+        equip = camera.CameraEquipment(tkroot, source, name)
+    ref = equipment.ReferenceableEquipment(equip, pbroot)
+    ref.start()
+d.addCallback(gotRoot)
+
+reactor.run()

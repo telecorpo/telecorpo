@@ -42,5 +42,6 @@ class ScreenEquipment(StreamingWindow):
             latency = 0
         self.pipe.stop()
         self.pipe = Pipeline(self._description % (self.port, latency))
+        self.pipe.setXID(self.xid)
         self.pipe.start()
         

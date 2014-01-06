@@ -36,24 +36,18 @@ class ReferenceableEquipment(pb.Referenceable):
                                    self.port)
         def onError(err):
             err.trap(DuplicatedName)
-            self.remote_purge()
+            self.stop()
         d.addErrback(onError)
         return d 
-
-    def remote_purge(self):
-        """Connection closed by server."""
-        from twisted.internet import reactor
-        self.thing.stop()
-        reactor.stop()
-
+    
     def start(self):
         self.thing.start()
         d = self.connect()
         return d
 
     def stop(self):
-        self.pbroot.callRemote("unregister", self.name)
-        self.remote_purge()
+        from twisted.internet import reactor
+        self.thing.stop()
 
     def __getattr__(self, name):
         if not name.startswith('remote_'):

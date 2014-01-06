@@ -40,7 +40,7 @@ class StreamingWindowTestCase(TestCase):
             self.win.stop()
     
     def test_title(self):
-        self.assertEqual(self.win.title, 'foo')
+        self.assertEqual(self.win.root.wm_title(), 'foo')
 
     def test_toggle_fullscreen(self):
         # TODO Trigger <Double-Button-1> istead of use toggle_fullscreen()

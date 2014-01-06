@@ -3,6 +3,7 @@ setup (
     name = 'telecorpo',
     version = '0.1',
     packages = find_packages(),
+    scripts = ['bin/tc'],
     install_requires = ['twisted', 'mock', 'ipython', 'pylint', 'ipdb'],
     classifiers = [
         "Programming Language :: Python",
