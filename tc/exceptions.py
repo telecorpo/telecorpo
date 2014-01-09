@@ -1,7 +1,10 @@
 
 from twisted.spread import pb
 
-class PipelineFailure(Exception):
+class MultimediaException(Exception):
+    pass
+
+class PipelineFailure(MultimediaException):
     pass
 
 class NotFound(pb.Error):
@@ -10,4 +13,5 @@ class NotFound(pb.Error):
 class DuplicatedName(pb.Error):
     pass
 
-
+class ExitException(Exception):
+    pass

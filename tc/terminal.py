@@ -4,32 +4,37 @@ from twisted.protocols import basic
 
 from tc.exceptions import NotFound
 
+from tc.broker import RemoteType
+
 class TerminalFactory(protocol.Factory):
-    def __init__(self, pbroot):
-        self.pbroot = pbroot
+    def __init__(self, broker):
+        self.broker = broker
 
     def buildProtocol(self, addr):
         return TerminalProtocol(self)
 
     def listAll(self):
-        for client in itertools.chain(self.pbroot.cameras.values(),
-                                      self.pbroot.screens.values()):
-            yield client.name, client.kind
+        for ref, data in self.broker.remotes.values():
+            if data.kind == RemoteType.CAMERA:    kind = 'Camera'
+            elif data.kind == RemoteType.MANAGER: kind = 'Manager'
+            elif data.kind == RemoteType.SCREEN:  kind = 'Screen'
+            yield data.name, kind
+
 
     def listKind(self, kind):
-        if kind.lower() in ['cam', 'camera', 'cameras']:
-            clients = self.pbroot.cameras.values()
-        elif kind.lower() in ['scr', 'screen', 'screens']:
-            clients = self.pbroot.screens.values()
-
-        for client in clients:
-            yield client.name
+        if kind.startswith('cam'):   kind = RemoteType.CAMERA
+        elif kind.startswith('man'): kind = RemoteType.MANAGER
+        elif kind.startswith('scr'): kind = RemoteType.SCREEN
+        
+        for ref, data in self.broker.remotes.values():
+            if data.kind == kind:
+                yield data.name
 
     def route(self, cam_name, scr_name):
-        self.pbroot.remote_route(cam_name, scr_name)
+        self.broker.remote_route(cam_name, scr_name)
 
     def changeLatency(self, scr_name, delta):
-        self.pbroot.remote_changeLatency(scr_name, delta)
+        self.broker.remote_changeLatency(scr_name, delta)
 
 
 class TerminalProtocol(basic.LineOnlyReceiver):
@@ -100,7 +105,7 @@ class TerminalProtocol(basic.LineOnlyReceiver):
         self.sendLine("\tlist [camera|screen]")
         self.sendLine("\troute CAMERA SCREEN")
         self.sendLine("\tquit")
-        self.sendLine("\tHelp")
+        self.sendLine("\thelp")
         self.sendLine("")
         self.sendPrompt()
 
