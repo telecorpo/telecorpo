@@ -44,8 +44,7 @@ class Reference(pb.Referenceable):
             self.pbroot.broker.transport.loseConnection()
             msg = err.getErrorMessage()
             log.msg(msg)
-            if reactor.running:
-                reactor.stop()
+            reactor.stop()
         df.addErrback(onDuplicatedName)
         return df
 
