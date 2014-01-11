@@ -10,7 +10,7 @@ Usage:
     tc -h | --help
 
 Options:
-    -h --help           Show this help.
+    -h --help           Show full help.
     -n --name=NAME      Client name on format 'name@site'.
     -s --server=SERVER  Server address [default: localhost].
     -i --input=INPUT    Camera input [default: ball]. 
@@ -20,16 +20,19 @@ Options:
 """
 
 import socket
+import sys
 import Tkinter as tkinter
 
 from docopt import docopt
 from twisted.internet import reactor, tksupport
 from twisted.spread import pb
 from twisted.internet import reactor
+from twisted.python import log
 
 from tc import broker, terminal
 from tc.multimedia import pipelines, receivers, streamers, VideoWindow
 
+# log.startLogging(sys.stdout)
 
 def abort(msg):
     print 'Abort:', msg.strip()
@@ -51,7 +54,7 @@ args = docopt(__doc__)
 
 if args['terminal']:
     import os
-    raise SystemExit(os.system("telnet %s %s" % (args['--server'], args['--telnet'])))
+    sys.exit(os.system("telnet %s %s" % (args['--server'], args['--telnet'])))
 
 
 if args['server']:
@@ -62,13 +65,13 @@ if args['server']:
     reactor.listenTCP(server_port, pb.PBServerFactory(broker))
     reactor.listenTCP(telnet_port, terminal.TerminalFactory(broker))
     reactor.run()
-    raise SystemExit
-
+    sys.exit()
 
 
 name = args['NAME']
 if '@' not in name or name[0] == '@' or name[-1] == '@':
-    abort("Bad name.")
+    log.msg("Bad name.")
+    sys.exit(1)
 
 server_addr = args['--server']
 server_port = int(args['--port'])
@@ -108,7 +111,10 @@ def gotRoot(pbroot):
     reference = broker.Reference(pipe, pbroot)
     reference.connect(data)
     pipe.play()
-df.addCallback(gotRoot)
+def noDonuts(err):
+    reactor.stop()
+    log.msg("Couldn't connect to server.")
+df.addCallbacks(gotRoot, noDonuts)
 
 reactor.run()
 pipe.stop()
