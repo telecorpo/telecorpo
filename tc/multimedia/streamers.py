@@ -93,6 +93,7 @@ class H264StreamerBin(AbstractStreamerBin):
     def createEncoder(self, name):
         enc = Gst.ElementFactory.make('x264enc', name)
         enc.set_property('tune', 'zerolatency')
+        enc.set_property('speed-preset', 'ultrafast')
         return enc
     
     def createPayloader(self, name):
