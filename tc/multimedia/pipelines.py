@@ -127,7 +127,7 @@ class CameraPipeline(BasePipeline):
     def _capturerElementFactory(cls, source, name):
         if source == 'v4l2':
             elem = Gst.ElementFactory.make('v4l2src', name)
-        elif source in ['ball', 'smpte']:
+        elif source in ['ball', 'smpte', 'snow']:
             elem = Gst.ElementFactory.make('videotestsrc', name)
             elem.set_property('pattern', source)
         else:
