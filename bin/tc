@@ -70,7 +70,7 @@ if args['server']:
 
 name = args['NAME']
 if '@' not in name or name[0] == '@' or name[-1] == '@':
-    log.msg("Bad name.")
+    print "Invalid name '%s'." % name
     sys.exit(1)
 
 server_addr = args['--server']
