@@ -70,7 +70,10 @@ class Broker(pb.Root):
         if data.kind is RemoteType.SCREEN:
             if data.camera:
                 camRef, camData = self.remotes[data.camera]
-                camRef.callRemote('removeClient', data.addr, data.port)
+                try:
+                    camRef.callRemote('removeClient', data.addr, data.port)
+                except pb.DeadReferenceError:
+                    pass
         elif data.kind is RemoteType.CAMERA:
             for scrRef, scrData in map(self.remotes.get, data.screens):
                 scrData.camera = None
