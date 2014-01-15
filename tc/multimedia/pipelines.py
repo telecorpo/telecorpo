@@ -95,6 +95,7 @@ class CameraPipeline(BasePipeline):
         xvimageQueue = Gst.ElementFactory.make('queue', None)
         xvimageCaps = streamer.createCapsFilter(None)
         xvimage = Gst.ElementFactory.make('xvimagesink', 'xvimagesink')
+        xvimage.set_property('sync', False)
         
         gpipe.add(capturer)
         gpipe.add(tee)
@@ -153,6 +154,7 @@ class ScreenPipeline(BasePipeline):
         # Create elements
         receiver = cls.createReceiver('receiver', port)
         xvimage = Gst.ElementFactory.make('xvimagesink', None)
+        xvimagesink.set_property('sync', False)
 
         gpipe.add(receiver)
         gpipe.add(xvimage)

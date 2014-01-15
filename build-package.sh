@@ -16,7 +16,8 @@ python setup.py --command-packages=stdeb.command sdist_dsc
 set eux
 
 cd deb_dist/telecorpo-*/
-DEPS=", python-gi, gir1.2-gstreamer-1.0, gir1.2-gst-plugins-base-1.0"
+DEPS=", python-tk, python-gi"
+DEPS=$DEPS", gir1.2-gstreamer-1.0, gir1.2-gst-plugins-base-1.0"
 DEPS=$DEPS", gstreamer1.0-plugins-good, gstreamer1.0-plugins-ugly"
 DEPS=$DEPS", gstreamer1.0-plugins-bad, gstreamer1.0-libav"
 sed -i.bak "/^Depends:/s/$/$DEPS/" debian/control
