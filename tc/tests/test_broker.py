@@ -5,9 +5,7 @@ from twisted.trial import unittest
 from twisted.test import proto_helpers
 
 from tc.broker import *
-from tc.multimedia.pipelines import *
-from tc.multimedia.receivers import *
-from tc.multimedia.streamers import *
+from tc.pipelines import *
 
 
 class IOPump:

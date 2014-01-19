@@ -1,6 +1,6 @@
 
 import collections
-from tc.exceptions import NotFound, DuplicatedName, ExitException
+from tc import NotFound, DuplicatedName, ExitException
 from twisted.internet import reactor
 from twisted.spread import pb
 from twisted.python import log

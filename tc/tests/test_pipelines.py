@@ -5,10 +5,10 @@ from time import sleep
 
 from gi.repository import GObject, Gst, Gdk, GLib, GstVideo
 
-from tc.exceptions import MultimediaException
+from tc import MultimediaException
 from twisted.trial.unittest import TestCase
 
-from tc.multimedia.pipelines import Pipeline, cameraFactory, screenFactory
+from tc.pipelines import Pipeline, cameraFactory, screenFactory
 
 class PipelineTestCase(TestCase):
 

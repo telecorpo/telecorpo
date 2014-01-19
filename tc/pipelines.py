@@ -5,7 +5,7 @@ import gi
 # from abc import ABCMeta, abstractmethod
 from gi.repository import GObject, Gst, Gdk, GLib, GstVideo
 
-from tc.exceptions import MultimediaException
+from tc import MultimediaException
 
 # from .streamers import H264StreamerBin
 # from .receivers import H264ReceiverBin
