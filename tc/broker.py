@@ -1,6 +1,6 @@
 
 import collections
-from tc.exceptions import NotFound, DuplicatedName, ExitException
+from tc import NotFound, DuplicatedName, ExitException
 from twisted.internet import reactor
 from twisted.spread import pb
 from twisted.python import log
@@ -70,6 +70,7 @@ class Broker(pb.Root):
         if data.kind is RemoteType.SCREEN:
             if data.camera:
                 camRef, camData = self.remotes[data.camera]
+                camData.screens.remove(data.name)
                 try:
                     camRef.callRemote('removeClient', data.addr, data.port)
                 except pb.DeadReferenceError:

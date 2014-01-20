@@ -1,13 +1,13 @@
+import Tkinter as tk
 
+from gi.repository import Gst
 from mock import Mock
 from twisted.internet import reactor, defer
 from twisted.trial import unittest
 from twisted.test import proto_helpers
 
 from tc.broker import *
-from tc.multimedia.pipelines import *
-from tc.multimedia.receivers import *
-from tc.multimedia.streamers import *
+from tc.multimedia import *
 
 
 class IOPump:
@@ -35,6 +35,9 @@ class ConnectedTestCase(unittest.TestCase):
         self.broker = Broker()
         self.pumps = []
         self.remotes = {}
+        self.tkroot = tk.Tk()
+        self.window = VideoWindow(self.tkroot, 'xxx')
+        self.xid = self.window.getWindowHandle()
         reactor.stop = Mock()
 
     def connect(self, copyableData, pipeline):
@@ -73,6 +76,7 @@ class ConnectedTestCase(unittest.TestCase):
     def tearDown(self):
         for ref, data in self.remotes.values():
             ref.pipe.stop()
+        self.tkroot.destroy()
 
     def pump(self):
         for pump in self.pumps:
@@ -82,7 +86,7 @@ class ConnectedTestCase(unittest.TestCase):
 class BrokerTestCase(ConnectedTestCase):
 
     def test_cameraConnection(self):
-        pipe = CameraPipeline('ball')
+        pipe = CameraPipeline('ball', self.xid, (300, 400), 25)
         data = CopyableData(RemoteType.CAMERA, 'a@b')
 
         df = self.connect(data, pipe)
@@ -92,7 +96,7 @@ class BrokerTestCase(ConnectedTestCase):
         return df
 
     def test_screenConnection(self):
-        pipe = ScreenPipeline(1337)
+        pipe = ScreenPipeline(1337, self.xid)
         data = CopyableData(RemoteType.SCREEN, 'a@b', 1337)
 
         df = self.connect(data, pipe)
@@ -107,8 +111,8 @@ class BrokerTestCase(ConnectedTestCase):
         data1 = CopyableData(RemoteType.CAMERA, 'a@b')
         data2 = CopyableData(RemoteType.SCREEN, 'a@b', 1)
 
-        pipe1 = CameraPipeline('ball')
-        pipe2 = ScreenPipeline(1)
+        pipe1 = CameraPipeline('ball', self.xid, (300, 400), 25)
+        pipe2 = ScreenPipeline(1, self.xid)
 
         d1 = self.connect(data1, pipe1)
         d2 = self.connect(data2, pipe2)
@@ -120,10 +124,10 @@ class BrokerTestCase(ConnectedTestCase):
         return dl
 
     def test_changeLatency(self):
-        pipe = ScreenPipeline(1337)
+        pipe = ScreenPipeline(1337, self.xid)
         data = CopyableData(RemoteType.SCREEN, 'a@b', 1337)
         
-        oldLatency = pipe.receiver.jitter.get_property('latency')
+        oldLatency = pipe.buffer.get_property('latency')
         delta = +10
 
         d1 = self.connect(data, pipe)
@@ -135,7 +139,7 @@ class BrokerTestCase(ConnectedTestCase):
             return d2
 
         def checkLatency(none):
-            newLatency = pipe.receiver.jitter.get_property('latency')
+            newLatency = pipe.buffer.get_property('latency')
             self.assertEqual(newLatency, oldLatency + 10)
 
         d1.addCallback(step1)
@@ -145,8 +149,8 @@ class BrokerTestCase(ConnectedTestCase):
         camData = CopyableData(RemoteType.CAMERA, 'cam@br')
         scrData = CopyableData(RemoteType.SCREEN, 'scr@br', 1337)
 
-        camPipe = CameraPipeline('ball')
-        scrPipe = ScreenPipeline(1337)
+        camPipe = CameraPipeline('ball', self.xid, (300, 400), 25)
+        scrPipe = ScreenPipeline(1337, self.xid)
         
         camPipe.play()
         scrPipe.play()

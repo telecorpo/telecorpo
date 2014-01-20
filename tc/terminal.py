@@ -2,7 +2,7 @@ import itertools
 from twisted.internet import protocol
 from twisted.protocols import basic
 
-from tc.exceptions import NotFound
+from tc import NotFound
 
 from tc.broker import RemoteType
 
