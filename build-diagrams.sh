@@ -1,7 +1,7 @@
 #!/bin/bash
 
 cd $(dirname $0)
-pyreverse --ignore tests tc
+pyreverse --ignore 'tests' tc
 
 for f in *.dot
 do
