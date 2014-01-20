@@ -3,19 +3,24 @@
 tc - Telecorpo 
 
 Usage:
-    tc camera NAME [-s SERVER] [-p PORT] [-i INPUT]
+    tc camera NAME [-s SERVER] [-p PORT] [-i INPUT] [-r RESOLUTION] [-f FRAMERATE]
     tc screen NAME [-s SERVER] [-p PORT]
     tc server [-p PORT] [-t PORT]
     tc terminal [-s SERVER] [-t PORT]
     tc -h | --help
 
 Options:
-    -h --help           Show full help.
-    -n --name=NAME      Client name on format 'name@site'.
-    -s --server=SERVER  Server address [default: localhost].
-    -i --input=INPUT    Camera input [default: ball]. 
-    -p --port=PORT      Server port [default: 5000].
-    -t --telnet=PORT    Telnet port [default: 5001].
+    -h --help                   Show full help.
+    --version                   Show version.
+
+    -n --name=NAME              Client name on format 'name@site'.
+    -s --server=SERVER          Server address [default: localhost].
+    -p --port=PORT              Server port [default: 5000].
+    -t --telnet=PORT            Telnet port [default: 5001].
+
+    -i --input=INPUT            Camera input [default: ball]. 
+    -r --resolution=RESOLUTION  Camera resolution [default: 300x400] 
+    -f --framerate=FRAMERATE    Camera framerate [default: 30]
 
 """
 
@@ -29,14 +34,10 @@ from twisted.spread import pb
 from twisted.internet import reactor
 from twisted.python import log
 
-from tc import broker, terminal
-from tc.multimedia import pipelines, receivers, streamers, VideoWindow
+from tc import broker, terminal, multimedia
 
 # log.startLogging(sys.stdout)
 
-def abort(msg):
-    print 'Abort:', msg.strip()
-    raise SystemExit
 
 def getFreePort(addr):
     try:
@@ -80,22 +81,23 @@ tkroot = tkinter.Tk()
 tksupport.install(tkroot)
 
 if args['camera']:
-    pipe = pipelines.CameraPipeline(args['--input'])
+    window = multimedia.VideoWindow(tkroot, '%s - camera' % name)
+    resolution = map(int, args['--resolution'].split('x'))
+    framerate = int(args['--framerate'])
+    pipe = multimedia.CameraPipeline(args['--input'], window.getWindowHandle(),
+                                     resolution, framerate)
+                        
     data = broker.CopyableData(broker.RemoteType.CAMERA, name) 
-    title = '%s - camera' % name
 
 elif args['screen']:
+    window = multimedia.VideoWindow(tkroot, '%s - screen' % name)
     port = getFreePort((server_addr, server_port))
-    pipe = pipelines.ScreenPipeline(port)
+    pipe = multimedia.ScreenPipeline(port, window.getWindowHandle())
     data = broker.CopyableData(broker.RemoteType.SCREEN, name, port)
-    title = '%s - screen' % name
 
 else:
     raise RuntimeError
 
-
-window = VideoWindow(tkroot, title)
-pipe.setWindowHandle(window.getWindowHandle())
 
 factory = pb.PBClientFactory()
 reactor.connectTCP(server_addr, server_port, factory)
