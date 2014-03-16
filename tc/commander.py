@@ -28,6 +28,11 @@ class TerminalFactory(protocol.Factory):
     def route(self, cam_name, scr_name):
         self.pbroot.remote_route(cam_name, scr_name)
 
+    def listRoutes(self):
+        for route in self.pbroot.routes:
+            yield route
+
+
 
 class TerminalProtocol(basic.LineOnlyReceiver):
 
@@ -47,7 +52,6 @@ class TerminalProtocol(basic.LineOnlyReceiver):
             return self.sendPrompt()
 
         tokens = line.split()
-
         cmd = tokens[0]
         if cmd in ["?", "h", "help"]:
             return self.showHelp()
@@ -59,8 +63,12 @@ class TerminalProtocol(basic.LineOnlyReceiver):
                     for n, k in self.factory.listAll()))
             else:
                 kind = tokens[1]
-                self.sendResponse("\n".join(
-                    n for n in self.factory.listKind(kind)))
+                if kind == 'route':
+                    self.sendResponse("\n".join("%s -> %s" % (c, s)
+                        for c, s in self.factory.listRoutes()))
+                else:
+                    self.sendResponse("\n".join(
+                        n for n in self.factory.listKind(kind)))
             return
         
         elif cmd in ["r", "route"]:
@@ -79,7 +87,7 @@ class TerminalProtocol(basic.LineOnlyReceiver):
     
     def showHelp(self):
         self.sendLine("Available commands:")
-        self.sendLine("\tlist [camera|screen]")
+        self.sendLine("\tlist [camera|screen|route]")
         self.sendLine("\troute CAMERA SCREEN")
         self.sendLine("\tquit")
         self.sendLine("\tHelp")
