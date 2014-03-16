@@ -28,9 +28,6 @@ class TerminalFactory(protocol.Factory):
     def route(self, cam_name, scr_name):
         self.pbroot.remote_route(cam_name, scr_name)
 
-    def changeLatency(self, scr_name, delta):
-        self.pbroot.remote_changeLatency(scr_name, delta)
-
 
 class TerminalProtocol(basic.LineOnlyReceiver):
 
@@ -66,20 +63,6 @@ class TerminalProtocol(basic.LineOnlyReceiver):
                     n for n in self.factory.listKind(kind)))
             return
         
-        elif cmd in ["la", "latency"]:
-            if len(tokens) != 3:
-                return self.badCommand()
-            try:
-                scr, delta = tokens[1:]
-                delta = int(delta)
-            except:
-                return self.badCommand()
-            try:
-                self.factory.changeLatency(scr, int(delta)*1000)
-                return self.sendPrompt()
-            except NotFound:
-                self.sendResponse("%s not found." % scr)
-
         elif cmd in ["r", "route"]:
             if len(tokens) != 3:
                 return self.badCommand()
@@ -96,7 +79,6 @@ class TerminalProtocol(basic.LineOnlyReceiver):
     
     def showHelp(self):
         self.sendLine("Available commands:")
-        self.sendLine("\tlatency SCREEN DELTA")
         self.sendLine("\tlist [camera|screen]")
         self.sendLine("\troute CAMERA SCREEN")
         self.sendLine("\tquit")

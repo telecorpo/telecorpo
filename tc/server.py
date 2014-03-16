@@ -78,10 +78,3 @@ class Server(pb.Root):
 
         self.routes.append((camera.name, screen.name))
         camera.ref.callRemote("addClient", screen.addr, screen.port)
-
-    def remote_changeLatency(self, scr_name, delta):
-        try:
-            screen = self.screens[scr_name]
-            screen.ref.callRemote("changeLatency", delta)
-        except KeyError:
-            raise NotFound
