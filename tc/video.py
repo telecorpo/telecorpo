@@ -8,13 +8,37 @@ from twisted.internet import reactor
 
 from tc.exceptions import PipelineFailure
 
-__ALL__ = ['Pipeline', 'StreamingWindow', 'PipelineFailure']
-
 
 gi.require_version('Gst', '1.0')
 GObject.threads_init()
 Gdk.threads_init()
 Gst.init(None)
+
+
+def _pipeline_works(pipe):
+    pipe.set_state(Gst.State.PLAYING)
+    states = pipe.get_state(0)
+    ok = False
+    if states[-1] == Gst.State.PLAYING:
+        ok = True
+    elif states[-1] == Gst.State.VOID_PENDING:
+        if states[-2] == Gst.State.PLAYING:
+            ok = True
+    pipe.set_state(Gst.State.NULL)
+    return ok
+
+
+def has_firewire():
+    import subprocess
+    proc = subprocess.Popen('lspci | grep -i "(1394|firewire)"', shell=True,
+                            stdout=subprocess.PIPE)
+    out, err = proc.communicate()
+    return len(out) > 0
+
+
+def has_v4l2():
+    import os
+    return os.path.exists('/dev/video0')
 
 
 class Element(object):

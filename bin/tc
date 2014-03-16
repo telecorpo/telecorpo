@@ -3,7 +3,7 @@
 tc - Telecorpo 
 
 Usage:
-    tc camera NAME [-s SERVER] [-p PORT] [-i INPUT]
+    tc camera NAME [-s SERVER] [-p PORT]
     tc screen NAME [-s SERVER] [-p PORT]
     tc server [-p PORT] [-t PORT]
     tc terminal [-s SERVER] [-t PORT]
@@ -13,7 +13,6 @@ Options:
     -h --help           Show this help.
     -n --name=NAME      Client name on format 'name@site'.
     -s --server=SERVER  Server address [default: localhost].
-    -i --input=INPUT    Camera input [default: test]. 
     -p --port=PORT      Server port [default: 5000].
     -t --telnet=PORT    Telnet port [default: 5001].
 
@@ -92,18 +91,7 @@ def gotRoot(pbroot):
     if args['screen']:
         equip = screen.ScreenEquipment(tkroot, port, name)
     elif args['camera']:
-        source = args['--input']
-        if source == 'test':
-            source = """videotestsrc pattern=ball
-                ! video/x-raw,format=I420,framerate=30/1,width=480,heigth=360
-            """
-        elif source in ['v4l2', 'cam', 'webcam']:
-            source = """gst-launch v4l2src
-                ! video/x-raw,format=I420,width=320,height=240,framerate=30/1
-            """
-        else:
-            raise NotImplementedError
-        equip = camera.CameraEquipment(tkroot, source, name)
+        equip = camera.CameraEquipment(tkroot, name)
     ref = equipment.ReferenceableEquipment(equip, pbroot)
     ref.start()
 d.addCallback(gotRoot)
