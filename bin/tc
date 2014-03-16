@@ -11,7 +11,7 @@ Usage:
 
 Options:
     -h --help           Show this help.
-    -n --name=NAME      Client name on format 'name@site'.
+    -n --name=NAME      Client name.
     -s --server=SERVER  Server address [default: localhost].
     -p --port=PORT      Server port [default: 5000].
     -t --telnet=PORT    Telnet port [default: 5001].
@@ -57,8 +57,8 @@ if args['server']:
     reactor.run()
     raise SystemExit
 
-name = args['NAME']
-if '@' not in name or name[0] == '@' or name[-1] == '@':
+name = args['NAME'].strip()
+if not name:
     abort("Bad name.")
 
 server_addr = args['--server']
