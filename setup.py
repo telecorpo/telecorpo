@@ -11,7 +11,7 @@ setup(
 
     packages = find_packages(),
     scripts = ['bin/tc'],
-    install_requires = ['pyzmq', 'colorlog'],
+    install_requires = ['pyzmq', 'colorlog', 'docopt'],
 
     classifiers = [
         "Development Status :: 2 - Pre-Alpha",
