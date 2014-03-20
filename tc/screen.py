@@ -8,11 +8,25 @@ import sys
 import threading
 import zmq
 
-from utils import Window, ServerInfo
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import GObject, Gst, GdkX11, GstVideo
+
+GObject.threads_init()
+Gst.init(None)
+
+from utils import Window, ServerInfo, get_logger, Pipeline
 
 
-LOGGER = logging.getLogger("screen")
-LOGGER.setLevel(logging.DEBUG)
+LOGGER = get_logger("screen")
+
+class ScreenPipeline(Pipeline):
+    def __init__(self, port, xid):
+        pipe = Gst.parse_launch("""
+            udpsrc port={port} caps=application/x-rtp ! rtpjitterbuffer
+            ! rtph264depay ! avdec_h264 ! xvimagesink sync=false
+        """.format(port=port))
+        super().__init__(pipe, xid)
 
 
 class Receiver(threading.Thread):
@@ -32,19 +46,16 @@ class Receiver(threading.Thread):
         sock.send(b"")
         return xid
     
-    def create_pipeline(self, xid, port):
-        import mock
-        return mock.Mock()
-
     def run(self):
         xid = self.wait_for_xid()
-        pipe = self.create_pipeline(xid, self.screen.port)
+        pipe = ScreenPipeline(self.screen.port, xid)
 
         pipe.play()
         
         import time
         while not self.exit_evt.is_set():
             time.sleep(0.1)
+        pipe.stop()
 
 
 class ScreenInfo:

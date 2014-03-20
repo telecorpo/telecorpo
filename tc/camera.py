@@ -16,35 +16,26 @@ from gi.repository import GObject, Gst, GdkX11, GstVideo
 GObject.threads_init()
 Gst.init(None)
 
-from utils import Window, ServerInfo, get_logger
+from utils import Window, ServerInfo, get_logger, Pipeline
 
 
 LOGGER = get_logger("camera")
 
 
-class Pipeline:
+class CameraPipeline(Pipeline):
 
     def __init__(self, xid):
         source = self.detect_source()
-        self.pipe = Gst.parse_launch("""
+        pipe = Gst.parse_launch("""
             {source} ! videoconvert ! video/x-raw,format=I420 ! tee name=t 
                 t. ! queue ! x264enc tune=zerolatency ! queue ! rtph264pay
                    ! multiudpsink name=sink
                 t. ! queue ! autovideosink sync=false
         """.format(source=self.detect_source()))
+        super().__init__(pipe, xid)
+
         self.sink = self.pipe.get_by_name('sink')
         self.clients = []
-
-        self.xid = xid
-
-        self.bus = self.pipe.get_bus()
-        self.bus.add_signal_watch()
-        self.bus.enable_sync_message_emission()
-        self.bus.connect('sync-message::element', self._on_sync_message)
-
-    def _on_sync_message(self, bus, msg):
-        if msg.get_structure().get_name() == 'prepare-window-handle':
-            msg.src.set_window_handle(self.xid)
 
     def detect_source(self):
         if self.has_firewire():
@@ -71,12 +62,6 @@ class Pipeline:
             ok = False
         pipe.set_state(Gst.State.NULL)
         return ok
-
-    def play(self):
-        self.pipe.set_state(Gst.State.PLAYING)
-
-    def stop(self):
-        self.pipe.set_state(Gst.State.NULL)
 
     def add_client(self, addr, port):
         if (addr, port) not in self.clients:
@@ -108,7 +93,7 @@ class Streamer(threading.Thread):
     
     def run(self):
         xid = self.wait_for_xid()
-        pipe = Pipeline(xid)
+        pipe = CameraPipeline(xid)
 
         pipe.play()
 

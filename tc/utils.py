@@ -5,6 +5,12 @@ import multiprocessing
 import zmq
 
 
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import GObject, Gst, GdkX11, GstVideo
+
+GObject.threads_init()
+Gst.init(None)
 
 def get_logger(name):
     log = logging.getLogger(name)
@@ -18,6 +24,26 @@ def get_logger(name):
     log.addHandler(stream_handler)
     return log
 
+
+class Pipeline:
+
+    def __init__(self, pipe, xid):
+        self.pipe = pipe
+        self.xid = xid
+        self.bus = self.pipe.get_bus()
+        self.bus.add_signal_watch()
+        self.bus.enable_sync_message_emission()
+        self.bus.connect('sync-message::element', self._on_sync_message)
+
+    def _on_sync_message(self, bus, msg):
+        if msg.get_structure().get_name() == 'prepare-window-handle':
+            msg.src.set_window_handle(self.xid)
+
+    def play(self):
+        self.pipe.set_state(Gst.State.PLAYING)
+
+    def stop(self):
+        self.pipe.set_state(Gst.State.NULL)
 
 
 class Window(multiprocessing.Process):
