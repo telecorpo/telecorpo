@@ -2,7 +2,9 @@
 import colorlog
 import logging
 import multiprocessing
+import random
 import zmq
+from os import path
 
 
 import gi
@@ -11,6 +13,14 @@ from gi.repository import GObject, Gst, GdkX11, GstVideo
 
 GObject.threads_init()
 Gst.init(None)
+
+def banner():
+    print(open(path.join(path.dirname(__file__), 'banner.txt')).read())
+
+def quote():
+    quotes = open(path.join(path.dirname(__file__), 'quotes.txt')).read().split()
+    print(random.choice(quotes))
+     
 
 def get_logger(name):
     log = logging.getLogger(name)
