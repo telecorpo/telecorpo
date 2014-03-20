@@ -16,11 +16,10 @@ from gi.repository import GObject, Gst, GdkX11, GstVideo
 GObject.threads_init()
 Gst.init(None)
 
-from utils import Window, ServerInfo
+from utils import Window, ServerInfo, get_logger
 
 
-LOGGER = logging.getLogger("camera")
-LOGGER.setLevel(logging.DEBUG)
+LOGGER = get_logger("camera")
 
 
 class Pipeline:
@@ -28,10 +27,10 @@ class Pipeline:
     def __init__(self, xid):
         source = self.detect_source()
         self.pipe = Gst.parse_launch("""
-            {source} ! videoconvert ! tee name=t 
+            {source} ! videoconvert ! video/x-raw,format=I420 ! tee name=t 
                 t. ! queue ! x264enc tune=zerolatency ! queue ! rtph264pay
                    ! multiudpsink name=sink
-                t. ! queue ! autovideosink
+                t. ! queue ! autovideosink sync=false
         """.format(source=self.detect_source()))
         self.sink = self.pipe.get_by_name('sink')
         self.clients = []
@@ -126,12 +125,11 @@ class Streamer(threading.Thread):
             if action == 'route':
                 print(1)
                 LOGGER.info("Streaming to %s <%s:%d>" % (screen, addr, port))
-                print((screen, addr, port))
-                pipe.route(addr, port)
+                pipe.add_client(addr, port)
             elif action == 'unroute':
                 LOGGER.info("Stop streaming to %s <%s:%s>" % (screen, addr,
                                                               port))
-                pipe.unroute(addr, port)
+                pipe.remove_client(addr, port)
             sock.send(b"")
         pipe.stop()
 
@@ -173,6 +171,8 @@ def main():
 
     server = ServerInfo(sys.argv[2].strip())
     camera = CameraInfo(sys.argv[1].strip(), server)
+
+    print(camera.addr)
     
     context = zmq.Context.instance()
     

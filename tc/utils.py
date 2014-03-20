@@ -1,7 +1,24 @@
 
+import colorlog
+import logging
 import multiprocessing
-# import tkinter as tk
 import zmq
+
+
+
+def get_logger(name):
+    log = logging.getLogger(name)
+    log.setLevel(logging.DEBUG)
+    
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(colorlog.ColoredFormatter(
+        "%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s"
+    ))
+
+    log.addHandler(stream_handler)
+    return log
+
+
 
 class Window(multiprocessing.Process):
 
@@ -12,6 +29,7 @@ class Window(multiprocessing.Process):
         self.title = title
     
     def draw(self):
+        # http://bugs.python.org/issue5527
         import tkinter as tk
         self.root = tk.Tk()
         self.root.wm_title(self.title)
