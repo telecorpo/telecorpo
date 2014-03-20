@@ -35,7 +35,7 @@ class Terminal(cmd.Cmd):
         ok, obj = self._get_camera()
         if ok:
             if len(obj) != 0:
-                print(", ".join(obj))
+                print(", ".join(sorted(obj)))
             else:
                 print("No camera found")
         else:
@@ -45,7 +45,7 @@ class Terminal(cmd.Cmd):
         ok, obj = self._get_screen()
         if ok:
             if len(obj) != 0:
-                print(", ".join(obj))
+                print(", ".join(sorted(obj)))
             else:
                 print("No screen found")
         else:
