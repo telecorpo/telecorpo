@@ -3,114 +3,183 @@
 import itertools
 import zmq
 
-from utils import ServerInfo
+from utils import ServerInfo, get_logger
 
 
-class Broker:
+LOGGER = get_logger(__name__)
+
+
+class UserError(Exception):
+    pass
+
+
+class state:
+    info = ServerInfo('*')
+    context = zmq.Context.instance()
+
     cameras = {}
     screens = {}
     routes = []
 
-    def __init__(self):
-        self.info = ServerInfo('*')
-        self.context = zmq.Context.instance()
+
+class sockets:
+    hello = state.context.socket(zmq.REP) 
+    hello.bind(state.info.hello_endpoint)
+
+    bye = state.context.socket(zmq.REP)
+    bye.bind(state.info.bye_endpoint)
+
+    list_cameras = state.context.socket(zmq.REP)
+    list_cameras.bind(state.info.list_cameras_endpoint)
+
+    list_screens = state.context.socket(zmq.REP)
+    list_screens.bind(state.info.list_screens_endpoint)
+
+    route = state.context.socket(zmq.REP)
+    route.bind(state.info.route_endpoint)
+
+
+def route(cam, scr):
+    if cam not in state.cameras: 
+        return "Camera not found"
+    if scr not in state.screens:
+        return "Screen not found"
+    if (cam, scr) in state.routes:
+        return "Duplicated route"
+    try: 
+        addr, port = state.screens[scr]
+    except KeyError:
+        raise UserError("Screen not found")
+    try:
+        sock = state.context.socket(zmq.REQ)
+        sock.connect(state.cameras[cam])
+    except KeyError:
+        raise UserError("Camera not found")
     
-        self.hello = self.context.socket(zmq.REP) 
-        self.hello.bind(self.info.hello_endpoint)
+    sock.send_pyobj(['route', scr, addr, port])
+    sock.recv()
+    state.routes.append((cam, scr))
 
-        self.bye = self.context.socket(zmq.REP)
-        self.bye.bind(self.info.bye_endpoint)
+    cam = [c for c, s in state.routes if s == scr][0]
+    unroute(cam, scr)
 
-        self.list_cameras = self.context.socket(zmq.REP)
-        self.list_cameras.bind(self.info.list_cameras_endpoint)
 
-        self.list_screens = self.context.socket(zmq.REP)
-        self.list_screens.bind(self.info.list_screens_endpoint)
+def unroute(cam, scr):
+    try:
+        state.routes.remove((cam, scr))
+    except ValueError:
+        raise UserError("Route doesn't exists")
 
-    def start(self):
-        poller = zmq.Poller()
-        poller.register(self.hello, zmq.POLLIN)
-        poller.register(self.bye, zmq.POLLIN)
-        poller.register(self.list_cameras, zmq.POLLIN)
-        poller.register(self.list_screens, zmq.POLLIN)
+    sock = state.context.socket(zmq.REQ)
+    sock.connect(state.cameras[cam])
 
-        while True:
-            socks = dict(poller.poll())
+    addr, port = state.screens[scr]
+    sock.send_pyobj(['unroute', scr, addr, port])
+    sock.recv()
 
-            if self.hello in socks and socks[self.hello] == zmq.POLLIN:
-                self.handle_hello()
-            
-            if self.bye in socks and socks[self.bye] == zmq.POLLIN:
-                self.handle_bye()
 
-            if self.list_cameras in socks:
-                self.handle_list_cameras()
+def hello(kind, name, obj):
+    if name in itertools.chain(state.cameras, state.screens):
+        raise UserError("Name already taken")
+    if kind == 'camera':
+        route_endpoint = obj[0]
+        state.cameras[name] = route_endpoint
+    elif kind == 'screen':
+        addr, port = obj
+        state.screens[name] = addr, int(port)
 
-            if self.list_screens in socks:
-                self.handle_list_screens()
 
-    def handle_bye(self):
-        kind, name = self.bye.recv_pyobj()
+def bye(kind, name):
+    if kind == "camera":
+        try:
+            del state.cameras[name]
+            state.routes = [r for r in state.routes if r[0] != name]
+        except KeyError:
+            raise UserError("Camera not found")
 
-        if kind == 'camera':
-            # delete unused routes
-            self.routes = [r for r in self.routes if r[0] != name]
-            del self.cameras[name]
+    elif kind == 'screen':
+        try:
+            del state.screens[name]
+            for cam in [r[0] for r in state.routes if r[1] == name]:
+                unroute(cam, name)
+        except KeyError:
+            raise UserError("Screen not found")
 
-        elif kind == 'screen':
-            # delete unused routes
-            for camera, screen in self.routes:
-                if screen == name:
-                    continue
 
-                screen_addr, screen_port = self.screens[screen]
-                
-                sock = self.context.socket(zmq.REQ)
-                sock.connect(self.cameras[camera])
-                sock.send_pyobj(['unroute', screen, screen_addr, screen_port])
-                sock.recv()
-            self.routes = [r for r in self.routes if r[1] != name]
-            del self.screens[name]
+def list_cameras(name=None):
+    if not name:
+        return state.cameras
+    try:
+        return state.cameras[name]
+    except KeyError:
+        raise UserError("Camera not found")
 
-        self.bye.send(b"")
 
-    def handle_hello(self):
-        msg = self.hello.recv_pyobj()
-        kind, name = msg[:2]
+def list_screens(name=None):
+    if not name:
+        return state.screens
+    try:
+        return state.screens[name]
+    except KeyError:
+        raise UserError("Screen not found")
+
+
+def main_loop():
+    poller = zmq.Poller()
+    poller.register(sockets.hello, zmq.POLLIN)
+    poller.register(sockets.bye, zmq.POLLIN)
+    poller.register(sockets.route, zmq.POLLIN)
+    poller.register(sockets.list_cameras, zmq.POLLIN)
+    poller.register(sockets.list_screens, zmq.POLLIN)
+
+    while True:
+        socks = dict(poller.poll())
+
+        if sockets.hello in socks:
+            parts = sockets.hello.recv_pyobj()
+            try:
+                hello(parts[0], parts[1], parts[2:])
+                sockets.hello.send_pyobj("ok")
+            except UserError as err:
+                sockets.hello.send_pyobj(str(err))
+
+        if sockets.bye in socks:
+            bye(*sockets.bye.recv_pyobj())
+            sockets.bye.send(b"")
+
+        if sockets.route in socks:
+            action, cam, scr = sockets.route.recv_pyobj()
+            try:
+                if action == 'route':
+                    route(cam, scr)
+                else:
+                    unroute(cam, scr)
+                sockets.route.send_pyobj("ok")
+            except UserError as err:
+                sockets.route.send_pyobj(str(err))
         
-        if name in itertools.chain(self.cameras, self.screens):
-            self.hello.send_pyobj("Name '%s' already taken" % name)
-            return
+        if sockets.list_cameras in socks:
+            name = sockets.list_cameras.recv_pyobj()
+            try:
+                resp = list_cameras(name)
+                sockets.list_cameras.send_pyobj([True, resp])
+            except UserError as err:
+                sockets.list_cameras.send_pyobj([False, str(err)])
 
-        if kind == 'camera':
-            route_endpoint = msg[2]
-            self.cameras[name] = route_endpoint
-        else:
-            addr, port = msg[2:]
-            self.screens[name] = (addr, port)
-        self.hello.send_pyobj("ok")
+        if sockets.list_screens in socks:
+            name = sockets.list_screens.recv_pyobj()
+            try:
+                resp = list_screens(name)
+                sockets.list_screens.send_pyobj([True, resp])
+            except UserError as err:
+                sockets.list_screens.send_pyobj([False, str(err)])
 
-    def handle_list_cameras(self):
-        name = self.list_cameras.recv_pyobj()
-        if not name:
-            result = True, self.cameras
-        elif name in self.cameras:
-            result = True, self.cameras[name]
-        else:
-            result = False, "Camera not found"
-        self.list_cameras.send_pyobj(result)
 
-    def handle_list_screens(self):
-        name = self.list_screens.recv_pyobj()
-        if not name:
-            result = True, self.screens
-        elif name in self.screens:
-            result = True, self.screens[name]
-        else:
-            result = False, "Screen not found"
-        self.list_screens.send_pyobj(result)
-
+def main():
+    try:
+        main_loop()
+    except KeyboardInterrupt:
+        LOGGER.warn("Close all clients manually")
 
 if __name__ == '__main__':
-    broker = Broker()
-    broker.start()
+    main_loop()

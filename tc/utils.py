@@ -125,4 +125,8 @@ class ServerInfo:
     def list_screens_endpoint(self):
         return 'tcp://%s:%d' % (self.addr, self.list_screens_port)
 
+    @property
+    def route_endpoint(self):
+        return 'tcp://%s:%d' % (self.addr, self.route_port)
+
 
