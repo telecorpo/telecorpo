@@ -11,7 +11,7 @@ setup(
 
     packages = find_packages(),
     scripts = ['bin/tc'],
-    install_requires = ['twisted', 'mock', 'docopt'],
+    install_requires = ['pyzmq', 'colorlog'],
 
     classifiers = [
         "Development Status :: 2 - Pre-Alpha",
