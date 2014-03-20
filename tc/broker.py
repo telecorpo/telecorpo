@@ -3,7 +3,7 @@
 import itertools
 import zmq
 
-from utils import ServerInfo, get_logger
+from tc.utils import ServerInfo, get_logger
 
 
 LOGGER = get_logger(__name__)
@@ -22,30 +22,25 @@ class state:
     routes = []
 
 
-class sockets:
-    hello = state.context.socket(zmq.REP) 
-    hello.bind(state.info.hello_endpoint)
+class Sockets:
+    def __init__(self):
+        hello = state.context.socket(zmq.REP) 
+        hello.bind(state.info.hello_endpoint)
 
-    bye = state.context.socket(zmq.REP)
-    bye.bind(state.info.bye_endpoint)
+        bye = state.context.socket(zmq.REP)
+        bye.bind(state.info.bye_endpoint)
 
-    list_cameras = state.context.socket(zmq.REP)
-    list_cameras.bind(state.info.list_cameras_endpoint)
+        list_cameras = state.context.socket(zmq.REP)
+        list_cameras.bind(state.info.list_cameras_endpoint)
 
-    list_screens = state.context.socket(zmq.REP)
-    list_screens.bind(state.info.list_screens_endpoint)
+        list_screens = state.context.socket(zmq.REP)
+        list_screens.bind(state.info.list_screens_endpoint)
 
-    route = state.context.socket(zmq.REP)
-    route.bind(state.info.route_endpoint)
+        route = state.context.socket(zmq.REP)
+        route.bind(state.info.route_endpoint)
 
 
 def route(cam, scr):
-    if cam not in state.cameras: 
-        return "Camera not found"
-    if scr not in state.screens:
-        return "Screen not found"
-    if (cam, scr) in state.routes:
-        return "Duplicated route"
     try: 
         addr, port = state.screens[scr]
     except KeyError:
@@ -125,6 +120,22 @@ def list_screens(name=None):
 
 
 def main_loop():
+    class sockets:
+        hello = state.context.socket(zmq.REP) 
+        hello.bind(state.info.hello_endpoint)
+
+        bye = state.context.socket(zmq.REP)
+        bye.bind(state.info.bye_endpoint)
+
+        list_cameras = state.context.socket(zmq.REP)
+        list_cameras.bind(state.info.list_cameras_endpoint)
+
+        list_screens = state.context.socket(zmq.REP)
+        list_screens.bind(state.info.list_screens_endpoint)
+
+        route = state.context.socket(zmq.REP)
+        route.bind(state.info.route_endpoint)
+
     poller = zmq.Poller()
     poller.register(sockets.hello, zmq.POLLIN)
     poller.register(sockets.bye, zmq.POLLIN)
@@ -182,4 +193,4 @@ def main():
         LOGGER.warn("Close all clients manually")
 
 if __name__ == '__main__':
-    main_loop()
+    main()

@@ -1,99 +1,50 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
-tc - Telecorpo 
-
 Usage:
-    tc camera NAME [-s SERVER] [-p PORT]
-    tc screen NAME [-s SERVER] [-p PORT]
-    tc server [-p PORT] [-t PORT]
-    tc terminal [-s SERVER] [-t PORT]
     tc -h | --help
+    tc broker
+    tc camera NAME [SERVER]
+    tc screen NAME [SERVER]
+    tc terminal [SERVER]
+
+Arguments:
+    NAME    Client name.
+    SERVER  Server address [default: 127.0.0.1].
 
 Options:
     -h --help           Show this help.
-    -n --name=NAME      Client name.
-    -s --server=SERVER  Server address [default: localhost].
-    -p --port=PORT      Server port [default: 5000].
-    -t --telnet=PORT    Telnet port [default: 5001].
 
 """
 
-import socket
-import Tkinter as tkinter
-
 from docopt import docopt
-from twisted.internet import reactor, tksupport
-from twisted.spread import pb
-from twisted.internet import reactor
+from sys import exit
 
-from tc import camera, screen, equipment, server, commander
+from tc import broker, camera, screen, terminal, utils
 
 
-def abort(msg):
-    print 'Abort:', msg.strip()
-    raise SystemExit
-
-def getFreePort(addr):
-    s = socket.socket()
-    s.connect(addr)
-    p = s.getsockname()
-    s.close()
-    return p[1]
-
-
+LOGGER = utils.get_logger(__name__)
 
 args = docopt(__doc__)
-if args['terminal']:
-    import os
-    raise SystemExit(os.system("telnet %s %s" % (args['--server'], args['--telnet'])))
+args['SERVER'] = args['SERVER'] or '127.0.0.1'
 
-if args['server']:
-    server = server.Server()
+utils.banner()
 
-    server_port = int(args['--port'])
-    telnet_port = int(args['--telnet'])
-    reactor.listenTCP(server_port, pb.PBServerFactory(server))
-    reactor.listenTCP(telnet_port, commander.TerminalFactory(server))
-    reactor.run()
-    raise SystemExit
+if args['camera']:
+    name = args['NAME'].strip()
+    if not name:
+        LOGGER.fatal("Ivalid name")
+        exit(1)
+    camera.main(name, args['SERVER'])
 
-name = args['NAME'].strip()
-if not name:
-    abort("Bad name.")
+elif args['screen']:
+    name = args['NAME'].strip()
+    if not name:
+        LOGGER.fatal("Invalid name")
+        exit(1)
+    screen.main(name, args['SERVER'])
 
-server_addr = args['--server']
-server_port = int(args['--port'])
+elif args['broker']:
+    broker.main()
 
-try:
-    port = getFreePort((server_addr, server_port))
-except socket.error as err:
-    abort(str(err).partition("]")[2])
-
-
-
-tkroot = tkinter.Tk()
-tksupport.install(tkroot)
-
-
-factory = pb.PBClientFactory()
-reactor.connectTCP(server_addr, server_port, factory)
-
-def connectionLost(*args):
-    if reactor.running:
-        reactor.stop()
-factory.clientConnectionLost = connectionLost
-
-ref = None
-
-d = factory.getRootObject()
-def gotRoot(pbroot):
-    global ref
-    if args['screen']:
-        equip = screen.ScreenEquipment(tkroot, port, name)
-    elif args['camera']:
-        equip = camera.CameraEquipment(tkroot, name)
-    ref = equipment.ReferenceableEquipment(equip, pbroot)
-    ref.start()
-d.addCallback(gotRoot)
-
-reactor.run()
+elif args['terminal']:
+    terminal.main(args['SERVER'])

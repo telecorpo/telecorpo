@@ -16,7 +16,7 @@ from gi.repository import GObject, Gst, GdkX11, GstVideo
 GObject.threads_init()
 Gst.init(None)
 
-from utils import Window, ServerInfo, get_logger, Pipeline
+from tc.utils import Window, ServerInfo, get_logger, Pipeline
 
 
 LOGGER = get_logger("camera")
@@ -147,17 +147,9 @@ class CameraInfo:
 
         self.exit_evt = exit
 
-def main():
-    # Parse arguments
-    if len(sys.argv) != 3:
-        print("usage: tc-camera NAME SERVER", file=sys.stderr)
-        sys.exit(1)
-
-    server = ServerInfo(sys.argv[2].strip())
-    camera = CameraInfo(sys.argv[1].strip(), server)
-
-    print(camera.addr)
-    
+def main(name, server_addr):
+    server = ServerInfo(server_addr)
+    camera = CameraInfo(name, server)
     context = zmq.Context.instance()
     
     # Register this client

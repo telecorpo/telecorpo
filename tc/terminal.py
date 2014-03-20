@@ -3,7 +3,7 @@ import cmd
 import sys
 import zmq
 
-from utils import ServerInfo
+from tc.utils import ServerInfo
 
 class Terminal(cmd.Cmd):
     
@@ -57,34 +57,18 @@ class Terminal(cmd.Cmd):
             print("Invalid number of arguments")
             return
         camera, screen = args
-        
-        ok, obj = self._get_camera(camera)
-        if not ok:
-            print(obj)
-            return
-        route_endpoint = obj
-
-        ok, obj = self._get_screen(screen)
-        if not ok:
-            print(obj)
-            return
-        addr, port = obj
-
         sock = self.context.socket(zmq.REQ)
-        sock.connect(route_endpoint)
-        sock.send_pyobj(['route', screen, addr, port])
-        sock.recv()
+        sock.connect(self.server.route_endpoint)
+        sock.send_pyobj(['route', camera, screen])
+        print(sock.recv_pyobj())
+        
 
     def do_EOF(self, line):
         return True
 
 
-def main():
-    if len(sys.argv) != 2:
-        print("usage: tc-terminal SERVER", file=sys.stderr)
-        sys.exit(1)
-
-    server = ServerInfo(sys.argv[1].strip())
+def main(server_addr):
+    server = ServerInfo(server_addr)
     terminal = Terminal(server)
     terminal.cmdloop()
 

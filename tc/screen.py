@@ -15,7 +15,7 @@ from gi.repository import GObject, Gst, GdkX11, GstVideo
 GObject.threads_init()
 Gst.init(None)
 
-from utils import Window, ServerInfo, get_logger, Pipeline
+from tc.utils import Window, ServerInfo, get_logger, Pipeline
 
 
 LOGGER = get_logger("screen")
@@ -94,15 +94,9 @@ class ScreenInfo:
         return self._port
 
 
-def main():
-    # Parse arguments
-    if len(sys.argv) != 3:
-        print("usage: tc-screen NAME SERVER", file=sys.stderr)
-        sys.exit(1)
-    
-    server = ServerInfo(sys.argv[2].strip())
-    screen = ScreenInfo(sys.argv[1].strip(), server)
-
+def main(name, server_addr):
+    server = ServerInfo(server_addr)
+    screen = ScreenInfo(name, server)
     context = zmq.Context.instance()
 
     # Register this client
@@ -151,6 +145,7 @@ def main():
         proc_exit_event.set()
     
     # Unregister this client
+    LOGGER.info("Send bye")
     bye = context.socket(zmq.REQ)
     bye.connect(server.bye_endpoint)
     bye.send_pyobj(["screen", screen.name])
