@@ -17,9 +17,9 @@ class TerminalFactory(protocol.Factory):
             yield client.name, client.kind
 
     def listKind(self, kind):
-        if kind.lower() in ['cam', 'camera', 'cameras']:
+        if kind.lower() == 'cameras':
             clients = self.pbroot.cameras.values()
-        elif kind.lower() in ['scr', 'screen', 'screens']:
+        elif kind.lower() == 'screens':
             clients = self.pbroot.screens.values()
 
         for client in clients:
@@ -63,12 +63,14 @@ class TerminalProtocol(basic.LineOnlyReceiver):
                     for n, k in self.factory.listAll()))
             else:
                 kind = tokens[1]
-                if kind == 'route':
+                if kind == 'routes':
                     self.sendResponse("\n".join("%s -> %s" % (c, s)
                         for c, s in self.factory.listRoutes()))
-                else:
+                elif kind in ['cameras', 'screens']:
                     self.sendResponse("\n".join(
                         n for n in self.factory.listKind(kind)))
+                else:
+                    self.badCommand()
             return
         
         elif cmd in ["r", "route"]:
@@ -87,7 +89,7 @@ class TerminalProtocol(basic.LineOnlyReceiver):
     
     def showHelp(self):
         self.sendLine("Available commands:")
-        self.sendLine("\tlist [camera|screen|route]")
+        self.sendLine("\tlist [cameras|screens|routes]")
         self.sendLine("\troute CAMERA SCREEN")
         self.sendLine("\tquit")
         self.sendLine("\tHelp")

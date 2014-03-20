@@ -131,17 +131,3 @@ class TestServer(ProtocolTestCase):
 
         self.connect(cam).addCallback(step1)
 
-    def test_changeLatency(self):
-        scr = DummyScreen("s@a", 1337)
-        scr.changeLatency = Mock()
-
-        def step1(none):
-            d = self.refs[scr].pbroot.callRemote("changeLatency", "s@a", -20)
-            self.pump()
-            self.pump()
-            d.addCallback(check) 
-    
-        def check(none):
-            scr.changeLatency.assert_called_with(-20)
-
-        self.connect(scr).addCallback(step1)

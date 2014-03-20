@@ -14,7 +14,7 @@ class TestCameraEquipment(TestCase):
         TestCase.setUp(self)
         self.root = tk.Tk()
         source = 'videotestsrc ! video/x-raw,format=I420,framerate=30/1'
-        self.cam = CameraEquipment(self.root, source, 'foo')
+        self.cam = CameraEquipment(self.root, 'foo')
 
     def test_hdsink(self):
         self.assertEqual(self.cam.pipe.hdsink.sync, True)

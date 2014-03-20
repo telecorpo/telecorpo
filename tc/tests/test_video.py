@@ -61,6 +61,6 @@ class StreamingWindowTestCase(TestCase):
     
     def test_xid(self):
         self.win.start()
-        sleep(.1)
+        sleep(.3)
         self.assertEquals(self.win.xid, self.win._xid)
 
