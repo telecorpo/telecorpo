@@ -70,6 +70,7 @@ class Terminal(cmd.Cmd):
 def main(server_addr):
     server = ServerInfo(server_addr)
     terminal = Terminal(server)
+    print('Press Ctrl-D to exit')
     terminal.cmdloop()
 
 if __name__ == '__main__':
