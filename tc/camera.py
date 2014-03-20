@@ -108,7 +108,6 @@ class Streamer(threading.Thread):
                 time.sleep(0.1)
                 continue
             if action == 'route':
-                print(1)
                 LOGGER.info("Streaming to %s <%s:%d>" % (screen, addr, port))
                 pipe.add_client(addr, port)
             elif action == 'unroute':
