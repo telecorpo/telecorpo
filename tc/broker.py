@@ -55,8 +55,9 @@ def route(cam, scr):
     sock.recv()
     state.routes.append((cam, scr))
 
-    cam = [c for c, s in state.routes if s == scr][0]
-    unroute(cam, scr)
+    for old_cam in [c for c, s in state.routes if s == scr]:
+        if old_cam != cam:
+            unroute(cam, scr)
 
 
 def unroute(cam, scr):
