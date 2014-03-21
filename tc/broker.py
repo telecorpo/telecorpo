@@ -9,6 +9,9 @@ from tc.utils import ServerInfo, get_logger
 LOGGER = get_logger(__name__)
 
 
+# UGLY POORLY WRITTEN CODE
+
+
 class UserError(Exception):
     pass
 
@@ -50,14 +53,13 @@ def route(cam, scr):
         sock.connect(state.cameras[cam])
     except KeyError:
         raise UserError("Camera not found")
-    
+
     sock.send_pyobj(['route', scr, addr, port])
     sock.recv()
     state.routes.append((cam, scr))
 
-    for old_cam in [c for c, s in state.routes if s == scr]:
-        if old_cam != cam:
-            unroute(cam, scr)
+    for old_cam in [c for c, s in state.routes if s == scr and c != cam]:
+        unroute(old_cam, scr)
 
 
 def unroute(cam, scr):
