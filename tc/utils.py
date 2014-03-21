@@ -65,6 +65,7 @@ class Window(multiprocessing.Process):
         import tkinter as tk
         self.root = tk.Tk()
         self.root.wm_title(self.title)
+        self.root.minsize(640, 480)
         self.is_fullscreen = False
         
         self.frame = tk.Frame(self.root, bg='#000000')

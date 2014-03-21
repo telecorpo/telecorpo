@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'telecorpo',
-    version = '0.4',
+    version = '0.5',
 
     author = 'Pedro Lacerda',
     author_email = 'pslacerda+tc@gmail.com',
