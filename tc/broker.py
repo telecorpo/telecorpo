@@ -193,7 +193,7 @@ def main():
     try:
         main_loop()
     except KeyboardInterrupt:
-        LOGGER.warn("Close all clients manually")
+        LOGGER.critical("Close all clients manually")
 
 if __name__ == '__main__':
     main()
