@@ -193,7 +193,8 @@ def main():
     try:
         main_loop()
     except KeyboardInterrupt:
-        LOGGER.warn("Close all clients manually")
+        if len(state.cameras) + len(state.screens) != 0:
+            LOGGER.critical("Close all clients manually")
 
 if __name__ == '__main__':
     main()
