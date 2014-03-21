@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'telecorpo',
-    version = '0.1',
+    version = '0.4',
 
     author = 'Pedro Lacerda',
     author_email = 'pslacerda+tc@gmail.com',
@@ -10,6 +10,7 @@ setup(
     description = 'software suite for telematic dance',
 
     packages = find_packages(),
+    package_data = {'tc': ['banner.txt']}, 
     scripts = ['bin/tc'],
     install_requires = ['pyzmq', 'colorlog', 'docopt'],
 
