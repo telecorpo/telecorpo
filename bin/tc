@@ -3,16 +3,16 @@
 Usage:
     tc -h | --help
     tc broker
-    tc camera NAME [SERVER]
-    tc screen NAME [SERVER]
-    tc terminal [SERVER]
+    tc camera NAME SERVER
+    tc screen NAME SERVER
+    tc terminal SERVER
 
 Arguments:
     NAME    Client name.
-    SERVER  Server address [default: 127.0.0.1].
+    SERVER  Server address.
 
 Options:
-    -h --help           Show this help.
+    -h --help  Show this help.
 
 """
 
@@ -25,7 +25,6 @@ from tc import broker, camera, screen, terminal, utils
 LOGGER = utils.get_logger(__name__)
 
 args = docopt(__doc__)
-args['SERVER'] = args['SERVER'] or '127.0.0.1'
 
 utils.banner()
 
