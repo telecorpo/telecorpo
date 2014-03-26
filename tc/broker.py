@@ -97,9 +97,9 @@ def bye(kind, name):
 
     elif kind == 'screen':
         try:
-            del state.screens[name]
             for cam in [r[0] for r in state.routes if r[1] == name]:
                 unroute(cam, name)
+            del state.screens[name]
         except KeyError:
             raise UserError("Screen not found")
 
