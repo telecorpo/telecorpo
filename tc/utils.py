@@ -15,6 +15,7 @@ GObject.threads_init()
 Gst.init(None)
 
 def banner():
+    return
     print(open(path.join(path.dirname(__file__), 'banner.txt')).read())
      
 
