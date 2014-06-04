@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'telecorpo',
-    version = '0.6',
+    version = '0.7',
 
     author = 'Pedro Lacerda',
     author_email = 'pslacerda+tc@gmail.com',
@@ -12,7 +12,7 @@ setup(
     packages = find_packages(),
     package_data = {'tc': ['banner.txt']}, 
     scripts = ['bin/tc'],
-    install_requires = ['pyzmq', 'colorlog', 'docopt'],
+    install_requires = ['colorlog', 'docopt'],
 
     classifiers = [
         "Development Status :: 2 - Pre-Alpha",
