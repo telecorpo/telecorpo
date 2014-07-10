@@ -8,6 +8,7 @@ import shutil
 class CustomInstallCommand(install):
 
     def run(self):
+        install.run(self)
         etcdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'etc')
 
         copies = [('/usr/share/gir-1.0', 'GstRtspServer-1.0.gir'),
@@ -16,16 +17,18 @@ class CustomInstallCommand(install):
 
         for dst, src in copies:
             src = os.path.join(etcdir, src)
-            print('cp {} {}'.format(src, dst))
-            # shutil.copy(src, dst)
+            if not os.path.isfile(dst):
+                print('cp {} {}'.format(src, dst))
+                shutil.copy(src, dst)
         
         links = ['libgstrtspserver-1.0.so.0',
                  'libgstrtspserver-1.0.so']
         for link in links: 
             src = '/usr/lib/libgstrtspserver-1.0.so.0.203.0'
             dst = os.path.join('/usr/lib', link)
-            print('ln -s {} {}'.format(src, dst))
-            # os.symlink(src, dst)
+            if not os.path.isfile(dst):
+                print('ln -s {} {}'.format(src, dst))
+                os.symlink(src, dst)
 
 
 setup(
@@ -35,11 +38,5 @@ setup(
     cmdclass = {
         'install': CustomInstallCommand,
     },
-
-    author = 'Pedro Lacerda',
-    author_email = 'pslacerda+tc@gmail.com',
-    url = 'www.poeticatecnologica.ufba.br',
-    description = 'software suite for telematic dance',
-
     packages = find_packages(),
 )

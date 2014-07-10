@@ -139,8 +139,7 @@ class ProducerWindow(Gtk.Window):
 
 
 if __name__ == '__main__':
-    # main()
-    Gst.init()
+    Gst.init(None)
     win = ProducerWindow()
     win.connect("delete-event", Gtk.main_quit)
     win.show_all()
