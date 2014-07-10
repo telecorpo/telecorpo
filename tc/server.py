@@ -1,65 +1,59 @@
 
 import socket
-import sys
-import threading
+import socketserver
 import time
+import threading
 
-# from tkinter import messagebox
-
-from flask import Flask, request
-from flask.ext.restful import reqparse, abort, Api, Resource
-
-app = Flask(__name__)
-api = Api(app)
 
 PRODUCERS = {}
 PRODUCERS_LOCK = threading.Lock()
 
 
-class Producers(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument('rtsp_mounts', type=lambda v: str(v).split(), required=True)
-    parser.add_argument('rtsp_port', type=int, required=True)
-    parser.add_argument('ping_port', type=int, required=True)
+class ServerHandler(socketserver.BaseRequestHandler):
 
-    def put(self):
+    def handle(self):
+        data = self.request.recv(1024).decode()
         with PRODUCERS_LOCK:
-            ipaddr = request.remote_addr
-            if ipaddr in PRODUCERS:
-                abort(400, message='Producer already connected')
+            if data == "*":
+                resp = "\n".join(" ".join([p] + m) for p, m in PRODUCERS)
             else:
-                args = self.parser.parse_args()
-                PRODUCERS[ipaddr] = {
-                    'ipaddr': ipaddr,
-                    'rtsp_mounts': args['rtsp_mounts'],
-                    'rtsp_port': args['rtsp_port'],
-                    'ping_port': args['ping_port']
-                }
-                return PRODUCERS[ipaddr]
+                ipaddr = self.request.getsockname()[0]
+                mounts = data.split()
+                if ipaddr in PRODUCERS:
+                    resp = "Producer already connected"
+                else:
+                    PRODUCERS[ipaddr] = mounts
+                    resp = "OK"
+        self.request.send(resp.encode())
 
-    def get(self):
-        return PRODUCERS
-
-api.add_resource(Producers, '/')
 
 
 def janitor():
     while True:
-        for producer in PRODUCERS.copy().values():
+        for producer in PRODUCERS.copy():
             time.sleep(0.2)
-            import ipdb; ipdb.set_trace()
             try:
-                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-                    addr = (producer['ipaddr'], producer['ping_port'])
-                    sock.connect(addr)
-                    assert sock.recv(100) == b'ok'
-            except socket.error as err:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                    address = (producer, 13371)
+                    sock.connect(address)
+                    sock.send(b"OPTIONS * RTSP/1.0\r\n")
+                    data = sock.recv(4096).decode().split("\r\n")[0]
+                    assert data == "RTSP/1.0 200 OK"
+            except Exception as err:
+                print(str(err))
                 with PRODUCERS_LOCK:
-                    del PRODUCERS[producer['ipaddr']]
+                    del PRODUCERS[producer]
                     break
 
 
 if __name__ == '__main__':
     janitor_thread = threading.Thread(target=janitor)
     janitor_thread.start()
-    app.run(host='0.0.0.0', port=13370, debug=True)
+
+    address = ('0.0.0.0', 13370)
+    server = socketserver.TCPServer(address, ServerHandler)
+    server.serve_forever()
+
+#
+# if __name__ == '__main__':
+#     app.run(host='0.0.0.0', port=13370, debug=True)

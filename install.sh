@@ -7,11 +7,9 @@ latest_version() {
 temp=$(mktemp -d)
 flags="--git-dir=$tmpdir/.git"
 
-apt-get install -y \
-    git \
-    python3 python3-setuptools python3-tk python3-gi \
-    gstreamer1.0-tools gstreamer1.0-plugins-{good,ugly,bad} gstreamer1.0-libav \
-    gir1.2-gstreamer-1.0 gir1.2-gst-plugins-base-1.0
+apt-get install -y git python3 python3-gi \
+                   gstreamer1.0-{tools,libav,plugins-{good,bad,ugly}} \
+                   gir1.2-{gstreamer-1.0,gtk-3.0}
 
 
 git clone https://bitbucket.org/pslacerda/telecorpo.git $temp

@@ -1,167 +1,147 @@
 
 
 import glob
-import requests
+import ipaddress
 import socket
-import textwrap
-import threading
-import tkinter as tk
 
-from gi.repository import Gst, GObject, GstRtspServer
-from idlelib.WidgetRedirector import WidgetRedirector
-from tkinter import messagebox
+from gi.repository import Gst, GstRtspServer, Gtk
 
-from .common import create_new_server_socket, get_logger, PongServer, test_source
-
-class ReadOnlyText(tk.Text):
-    def __init__(self, *args, **kwargs):
-        value = kwargs.pop('value')
-        tk.Text.__init__(self, *args, **kwargs)
-        self.insert('1.0', value)
-        self.__redirector = WidgetRedirector(self)
-        self.__insert =  self.__redirector.register("insert",
-                                                    lambda *args, **kw: "break")
-        self.__delete =  self.__redirector.register("delete",
-                                                    lambda *args, **kw: "break")
+def test_source(elem):
+    pipe = Gst.parse_launch('{} ! fakesink'.format(elem))
+    pipe.set_state(Gst.State.PLAYING)
+    ok = True
+    if Gst.StateChangeReturn.FAILURE == pipe.get_state(0)[0]:
+        ok = False
+    pipe.set_state(Gst.State.NULL)
+    return ok
 
 
-class RTSPServer(threading.Thread):
+def probe_sources():
+    sources = {'smpte': ("videotestsrc is-live=true ! queue"
+                        " ! x264enc preset=ultrafast tune=zerolatency"
+                        " ! queue ! rtph264pay")}
 
-    def __init__(self, exit_evt):
-        super().__init__()
-        self.exit_evt = exit_evt
-        self.sources = None
-        self.find_sources()
+    if test_source('dv1394src'):
+        sources['dv1394'] = "dv1394src ! queue ! rtpdvpay"
 
-        self.server = GstRtspServer.RTSPServer()
-        sock, self.port = create_new_server_socket()
-        sock.close()
-        self.server.set_service(str(self.port))
+    for dev in glob.glob('/dev/video*'):
+        elem = 'v4l2src device={}'.format(dev)
+        name = dev[5:]
+        if test_source(elem):
+            sources[name] = ("{} !  queue ! videoconvert"
+                             " ! video/x-raw,format=I420 ! queue"
+                             " ! x264enc preset=ultrafast tune=zerolatency"
+                             " ! queue ! rtph264pay".format(elem))
+    return sources
+
+
+def run_rtsp_server(sources):
+    server = GstRtspServer.RTSPServer()
+    server.set_service("13371")
     
-    @property
-    def mount_points(self):
-        return list(self.sources.keys())
+    mounts = server.get_mount_points()
+    for mount_point, pipeline in sources.items():
+        factory = GstRtspServer.RTSPMediaFactory()
+        factory.set_launch("( {} name=pay0 pt=96 )".format(pipeline))
+        factory.set_shared(True)
+        mounts.add_factory("/{}".format(mount_point), factory)
 
-    def find_sources(self):
-        self.sources = {}
-        if test_source('dv1394src'):
-            self.sources['dv1394'] = "dv1394src ! queue ! rtpdvpay"
+    server.attach()
+    return server
 
-        for dev in glob.glob('/dev/video*'):
-            elem = 'v4l2src device={}'.format(dev)
-            if test_source(elem):
-                self.sources[dev[5:]] = (
-                    "{} !  queue ! videoconvert ! video/x-raw,format=I420 ! queue"
-                    " ! x264enc preset=ultrafast tune=zerolatency ! queue ! rtph264pay".format(elem)
-                )
-        # if len(self.sources) == 0:
-        if True:
-            self.sources['smpte'] = (
-                "videotestsrc is-live=true ! queue ! x264enc preset=ultrafast tune=zerolatency"
-                " ! queue ! rtph264pay"
-            )
+
+def registrate_producer(server_address, source_names):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.connect((server_address, 13370))
+        sock.send(" ".join(source_names).encode())
+        resp = sock.recv(1024).decode()
+    if resp != "OK":
+        raise Exception(resp)
+
+
+class ProducerWindow(Gtk.Window):
+
+    def __init__(self):
+        super().__init__(title="Telecorpo Producer")
+
+        self.available_sources = probe_sources()
+        self.selected_sources = {}
+
+        self.vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+
+        self.draw_source_list()
+        self.draw_connection_form()
+
+        self.add(self.vbox)
     
-    def check_exit(self):
-        if self.exit_evt.is_set():
-            self.loop.quit()
-        return True
-
-    def run(self):
-        mounts = self.server.get_mount_points()
-        for mount, pipeline in self.sources.items():
-            mount = "/{}".format(mount)
-            pipeline = "( {} name=pay0 pt=96 )".format(pipeline)
-            factory = GstRtspServer.RTSPMediaFactory()
-            factory.set_launch(pipeline)
-            factory.set_shared(True)
-            mounts.add_factory(mount, factory)
+    def draw_source_list(self):
+        self._sources_liststore = Gtk.ListStore(str, bool)
+        for srcname in self.available_sources:
+            self._sources_liststore.append([srcname, False])
         
-        self.server.attach()
-        self.loop = GObject.MainLoop()
-        GObject.idle_add(self.check_exit)
-        self.loop.run()
+        treeview = Gtk.TreeView(model=self._sources_liststore)
 
-
-class Window(threading.Thread):
-
-    def __init__(self, exit_evt, params):
-        super().__init__()
-        self.exit_evt = exit_evt
-        self.params = params
-
-    def draw(self):
-        self.root = tk.Tk()
-        self.root.wm_title('Telecorpo Producer')
-        self.root.protocol('WM_DELETE_WINDOW', self.quit)
+        treeview.append_column(
+            Gtk.TreeViewColumn("Video source", Gtk.CellRendererText(), text=0))
         
-        tk.Label(self.root, text="Server").grid(row=0, column=0)
-        self.entry = tk.Entry(self.root)
-        self.entry.grid(row=0, column=1)
-
-        self.button = tk.Button(self.root, text="Connect", command=self.connect)
-        self.button.grid(row=0, column=2)
+        renderer = Gtk.CellRendererToggle()
+        renderer.connect("toggled", self.on_source_toggled)
+        treeview.append_column(
+            Gtk.TreeViewColumn("Activate", renderer, active=1))
         
-        text = "Listening heartbeats at 0.0.0.0:{}\n".format(self.params['ping_port'])
-        text += "Streaming RTSP at\n"
-        for mount_point in self.params['rtsp_mounts'].split():
-            text += "  rtsp://0.0.0.0:{}/{}\n".format(self.params['rtsp_port'], mount_point)
-        self.text = ReadOnlyText(self.root, value=text)
-        self.text.grid(row=1, columnspan=3)
+        self.vbox.add(treeview)
     
-    def quit(self):
-        self.exit_evt.set()
-        self.root.destroy()
+    def draw_connection_form(self):
+        hbox = Gtk.Box()
 
-    def connect(self):
-        server = self.entry.get()
-        addr, _, port = server.partition(":")
+        self._connection_entry = Gtk.Entry()
+        self._connection_entry.set_placeholder_text("Server address")
+        hbox.add(self._connection_entry)
+        
+        button = Gtk.Button("Registrate")
+        button.connect("clicked", self.on_registrate_clicked)
+        hbox.add(button)
+
+        self.vbox.add(hbox)
+
+    def on_source_toggled(self, widget, path):
+        self._sources_liststore[path][1] = not self._sources_liststore[path][1]
+        self.selected_sources.clear()
+        for source_name, selected in self._sources_liststore: 
+            if selected:
+                self.selected_sources[source_name] = self.available_sources[source_name]
+
+    def on_registrate_clicked(self, button):
+
+        def error(message):
+            dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.ERROR,
+                Gtk.ButtonsType.OK, "Couldn't connect to server")
+            dialog.format_secondary_text(message)
+            dialog.run()
+            dialog.destroy()
+       
+        if len(self.selected_sources) == 0:
+            return error("No sources activated")
+        
+        # keep variable to avoid garbage collection
+        self._server = run_rtsp_server(self.selected_sources)
+
         try:
-            socket.inet_aton(addr)
-            port = int(port) if port else 13370
-        except:
-            messagebox.showerror('Error', 'Invalid connection string')
-            return
-
-        url = 'http://{}:{}/'.format(addr, port)
-        try:
-            resp = requests.put(url, self.params).json()
-        except:
-            messagebox.showerror('Error', 'Cannont connect to server')
-            return
-        if 'message' in resp:
-            messagebox.showerror('Error', resp['message'])
-            return
+            address = self._connection_entry.get_text().strip()
+            address = str(ipaddress.ip_address(address))
+            registrate_producer(address, self.selected_sources)
+            pass
+        except Exception as err:
+            self._server = None
+            return error(str(err))
         
-        self.entry.configure(state='disabled')
-        # self.button.configure(state='disabled')
+        self.vbox.set_sensitive(False)
 
-    def run(self):
-        self.draw()
-        self.root.mainloop()
-
-
-def main():
-    Gst.init()
-    GObject.threads_init()
-
-    exit_evt = threading.Event()
-
-    pong_server = PongServer(exit_evt)
-    pong_server.start()
-
-    rtsp_server = RTSPServer(exit_evt)
-    rtsp_server.start()
-
-    window = Window(exit_evt, {
-        'rtsp_mounts': ' '.join(rtsp_server.mount_points),
-        'rtsp_port': rtsp_server.port,
-        'ping_port': pong_server.port
-    })
-    window.start()
-
-    window.join()
-    rtsp_server.join()
-    pong_server.join()
 
 if __name__ == '__main__':
-    main()
+    # main()
+    Gst.init()
+    win = ProducerWindow()
+    win.connect("delete-event", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()

@@ -17,15 +17,15 @@ class CustomInstallCommand(install):
         for dst, src in copies:
             src = os.path.join(etcdir, src)
             print('cp {} {}'.format(src, dst))
-            shutil.copy(src, dst)
+            # shutil.copy(src, dst)
         
         links = ['libgstrtspserver-1.0.so.0',
                  'libgstrtspserver-1.0.so']
         for link in links: 
             src = '/usr/lib/libgstrtspserver-1.0.so.0.203.0'
             dst = os.path.join('/usr/lib', link)
-            print('ln -s {} {}'.format(src, dst)
-            os.symlink(src, dst)
+            print('ln -s {} {}'.format(src, dst))
+            # os.symlink(src, dst)
 
 
 setup(
@@ -42,5 +42,4 @@ setup(
     description = 'software suite for telematic dance',
 
     packages = find_packages(),
-    install_requires = ['flask', 'flask-restful', 'requests']
 )
