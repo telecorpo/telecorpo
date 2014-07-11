@@ -12,7 +12,7 @@ PRODUCERS_LOCK = threading.Lock()
 class ServerHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
-        data = self.request.recv(1024).decode()
+        data = self.request.recv(1024).decode().strip()
         with PRODUCERS_LOCK:
             if data == "*":
                 resp = "\n".join(" ".join([p] + m) for p, m in PRODUCERS)
@@ -40,20 +40,18 @@ def janitor():
                     data = sock.recv(4096).decode().split("\r\n")[0]
                     assert data == "RTSP/1.0 200 OK"
             except Exception as err:
-                print(str(err))
                 with PRODUCERS_LOCK:
                     del PRODUCERS[producer]
                     break
 
 
 if __name__ == '__main__':
-    janitor_thread = threading.Thread(target=janitor)
+    janitor_thread = threading.Thread(target=janitor, daemon=True)
     janitor_thread.start()
 
     address = ('0.0.0.0', 13370)
     server = socketserver.TCPServer(address, ServerHandler)
-    server.serve_forever()
-
-#
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0', port=13370, debug=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
