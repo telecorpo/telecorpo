@@ -15,7 +15,7 @@ class ServerHandler(socketserver.BaseRequestHandler):
         data = self.request.recv(1024).decode().strip()
         with PRODUCERS_LOCK:
             if data == "*":
-                resp = "\n".join(" ".join([p] + m) for p, m in PRODUCERS)
+                resp = "\n".join(" ".join([p] + m) for p, m in PRODUCERS.items())
             else:
                 ipaddr = self.request.getsockname()[0]
                 mounts = data.split()
@@ -49,9 +49,9 @@ if __name__ == '__main__':
     janitor_thread = threading.Thread(target=janitor, daemon=True)
     janitor_thread.start()
 
-    address = ('0.0.0.0', 13370)
-    server = socketserver.TCPServer(address, ServerHandler)
     try:
+        address = ('0.0.0.0', 13370)
+        server = socketserver.TCPServer(address, ServerHandler)
         server.serve_forever()
     except KeyboardInterrupt:
         pass
