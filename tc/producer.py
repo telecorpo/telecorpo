@@ -1,10 +1,14 @@
 
-
 import glob
 import ipaddress
 import socket
+import textwrap
+import threading
+import tkinter as tk
 
-from gi.repository import Gst, GstRtspServer, Gtk
+from tkinter import ttk, messagebox
+from gi.repository import Gst, GstRtspServer, GObject
+
 
 def test_source(elem):
     pipe = Gst.parse_launch('{} ! fakesink'.format(elem))
@@ -47,7 +51,7 @@ def run_rtsp_server(sources):
         mounts.add_factory("/{}".format(mount_point), factory)
 
     server.attach()
-    return server
+    GObject.MainLoop().run()
 
 
 def registrate_producer(server_address, source_names):
@@ -59,88 +63,87 @@ def registrate_producer(server_address, source_names):
         raise Exception(resp)
 
 
-class ProducerWindow(Gtk.Window):
-
-    def __init__(self):
-        super().__init__(title="Telecorpo Producer")
+class MainWindow(tk.Frame):
+    
+    def __init__(self, master):
+        super().__init__(master)
 
         self.available_sources = probe_sources()
-        self.selected_sources = {}
 
-        self.vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-
+        self.master.title('Telecorpo Producer')
         self.draw_source_list()
         self.draw_connection_form()
-
-        self.add(self.vbox)
     
     def draw_source_list(self):
-        self._sources_liststore = Gtk.ListStore(str, bool)
-        for srcname in self.available_sources:
-            self._sources_liststore.append([srcname, False])
+        self.tree = ttk.Treeview(self.master)
+        for source_name in self.available_sources:
+            self.tree.insert('', 'end', text=source_name)
+        self.tree.grid(row=0, sticky='nsew')
+
+    def draw_connection_form(self): 
+        self.form = ttk.Frame(self.master)
+        self.form.grid(row=1, sticky='nsew')
         
-        treeview = Gtk.TreeView(model=self._sources_liststore)
+        def entry_placeholder(dummy):
+            self.entry.delete(0, 'end')
+            self.entry.unbind('<FocusIn>')
 
-        treeview.append_column(
-            Gtk.TreeViewColumn("Video source", Gtk.CellRendererText(), text=0))
+        self.entry = ttk.Entry(self.form)
+        self.entry.insert(0, "server address")
+        self.entry.bind('<Return>', self.on_click)
+        self.entry.bind('<FocusIn>', entry_placeholder)
+        self.entry.grid(row=0, column=0)
+
+        self.button = ttk.Button(self.form, text="Registrate",
+                                 command=self.on_click)
+        self.button.grid(row=0, column=1)
+
+    def get_selected_sources(self):
+        sources = {}
+        for item in self.tree.selection():
+            name = self.tree.item(item, 'text')
+            sources[name] = self.available_sources[name]
+        return sources
+
+    def on_click(self, dummy=None):
+        # check source selection
+        selected_sources = self.get_selected_sources()
+        if len(selected_sources) == 0:
+            messagebox.showwarning("User error",
+                                   "Select at least one video source")
+            return
         
-        renderer = Gtk.CellRendererToggle()
-        renderer.connect("toggled", self.on_source_toggled)
-        treeview.append_column(
-            Gtk.TreeViewColumn("Activate", renderer, active=1))
+        # disable source selection
+        self.tree.configure(selectmode='none')
+
+        # run RTSP server
+        rtsp_thread = threading.Thread(target=run_rtsp_server,
+                                       args=(selected_sources,),
+                                       daemon=True)
+        rtsp_thread.start()
+
         
-        self.vbox.add(treeview)
-    
-    def draw_connection_form(self):
-        hbox = Gtk.Box()
-
-        self._connection_entry = Gtk.Entry()
-        self._connection_entry.set_placeholder_text("Server address")
-        hbox.add(self._connection_entry)
-        
-        button = Gtk.Button("Registrate")
-        button.connect("clicked", self.on_registrate_clicked)
-        hbox.add(button)
-
-        self.vbox.add(hbox)
-
-    def on_source_toggled(self, widget, path):
-        self._sources_liststore[path][1] = not self._sources_liststore[path][1]
-        self.selected_sources.clear()
-        for source_name, selected in self._sources_liststore: 
-            if selected:
-                self.selected_sources[source_name] = self.available_sources[source_name]
-
-    def on_registrate_clicked(self, button):
-
-        def error(message):
-            dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.ERROR,
-                Gtk.ButtonsType.OK, "Couldn't connect to server")
-            dialog.format_secondary_text(message)
-            dialog.run()
-            dialog.destroy()
-       
-        if len(self.selected_sources) == 0:
-            return error("No sources activated")
-        
-        # keep variable to avoid garbage collection
-        self._server = run_rtsp_server(self.selected_sources)
-
+        # attemp to registrate this producer 
         try:
-            address = self._connection_entry.get_text().strip()
-            address = str(ipaddress.ip_address(address))
-            registrate_producer(address, self.selected_sources)
-            pass
+            server_address = str(ipaddress.ip_address(self.entry.get().strip()))
+            registrate_producer(server_address, selected_sources)
         except Exception as err:
-            self._server = None
-            return error(str(err))
-        
-        self.vbox.set_sensitive(False)
+            messagebox.showerror("Error",
+                                 "Failed to connect the server.\n{}".format(err))
+            return
+
+        # disable registration
+        self.entry.configure(state='disabled')
+        self.button.configure(state='disabled')
+
+
+def main():
+    Gst.init(None)
+    root = tk.Tk()
+    win = MainWindow(root)
+    root.mainloop()
 
 
 if __name__ == '__main__':
-    Gst.init(None)
-    win = ProducerWindow()
-    win.connect("delete-event", Gtk.main_quit)
-    win.show_all()
-    Gtk.main()
+    main()
+
