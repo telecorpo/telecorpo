@@ -24,83 +24,73 @@ def query_producers(server_address):
 
 class Pipeline:
 
-    def __init__(self, producers, extra):
-        self.producers = producers
-        self.extra = extra
+    def __init__(self, main_xid, urls):
 
-        self.pipe = None
-        self.bus = None
+        self.urls = urls
+        self.main_xid = main_xid
+        self.pipe = Gst.Pipeline()
+        self.url_to_index = {}
+
+        self.bus = self.pipe.get_bus()
+        self.bus.enable_sync_message_emission()
+        self.bus.connect('sync-message::element', self.on_sync_message)
+
         self.selector = None
-
         self.build()
 
     def on_pad_added(self, element, pad, target):
-        sinkpad = target.get_compatible_pad(pad, pad.get_caps())
+        sinkpad = target.get_compatible_pad(pad, pad.get_current_caps())
         pad.link(sinkpad)
-        # return True
+
+    def on_sync_message(self, bus, msg):
+        if msg.get_structure().get_name() != 'prepare-window-handle':
+            return
+        if not msg.src.get_name().startswith('main-sink'):
+            return
+        # msg.src.set_window_handle(xid)
+        print(msg.src.get_name())
+        print()
 
     def build(self):
-        
-        if self.pipe:
-            self.pipe.set_state(Gst.State.NULL)
-        self.pipe = Gst.Pipeline()
-
         self.selector = Gst.ElementFactory.make('input-selector', None)
-        big_sink = Gst.ElementFactory.make('xvimagesink', 'big-sink') 
+        main_sink = Gst.ElementFactory.make('autovideosink', 'main-sink') 
 
         self.pipe.add(self.selector)
-        self.pipe.add(big_sink)
+        self.pipe.add(main_sink)
 
-        self.selector.link(big_sink)
+        self.selector.link(main_sink)
 
-        index = 0
+        index = -1
+        for url in self.urls:
+            index += 1
+            self.url_to_index[url] = index
 
-        for producer in sorted(self.producers):
-            for source in  sorted(self.producers[producer]):
+            src = Gst.ElementFactory.make("rtspsrc", None)
+            src.set_property("latency", 100)
+            src.set_property("location", url)
 
-                src = Gst.ElementFactory.make("rtspsrc", None)
-                src.set_property("latency", 100)
-                src.set_property("location",
-                        "rtsp://{}:13371/{}".format(producer, source))
+            queue1 = Gst.ElementFactory.make("queue", None)
+            decode = Gst.ElementFactory.make("decodebin", None)
+            queue2 = Gst.ElementFactory.make("queue", None)
+            scale = Gst.ElementFactory.make("videoscale", None)
+            convert = Gst.ElementFactory.make("videoconvert", None)
+            rate = Gst.ElementFactory.make("videorate", None)
 
-                decode = Gst.ElementFactory.make("decodebin", "decode-%s" % index)
-                tee = Gst.ElementFactory.make("tee", "tee-%s" % index)
-                 
-                queue1 = Gst.ElementFactory.make("queue", "q1-%s" % index)
-                videosink = Gst.ElementFactory.make("autovideosink", "videosink-%s" % index)
+            self.pipe.add(src)
+            self.pipe.add(queue1)
+            self.pipe.add(decode)
+            self.pipe.add(queue2)
+            self.pipe.add(scale)
+            self.pipe.add(convert)
+            self.pipe.add(rate)
 
-                queue2 = Gst.ElementFactory.make("queue", "q2-%s" % index)
-                scale = Gst.ElementFactory.make("videoscale", "scale-%s" % index)
-                convert = Gst.ElementFactory.make("videoconvert", "convert-%s" % index)
-                rate = Gst.ElementFactory.make("videorate", "rate-%s" % index)
-
-
-                self.pipe.add(src)
-                self.pipe.add(decode)
-                self.pipe.add(tee)
-                self.pipe.add(queue1)
-                self.pipe.add(videosink)
-                self.pipe.add(queue2)
-                self.pipe.add(scale)
-                self.pipe.add(convert)
-                self.pipe.add(rate)
-
-
-                src.link(decode)
-                decode.connect("pad-added", self.on_pad_added, tee)
-
-                tee.link(queue1)
-                queue1.link(videosink)
-                
-                tee.link(queue2)
-                queue2.link(scale)
-                scale.link(convert)
-                convert.link(rate)
-
-                rate.link(self.selector)
-
-                self.extra[producer][source]['index'] = index
-                index += 1
+            src.connect("pad-added", self.on_pad_added, queue1)
+            queue1.link(decode)
+            decode.connect("pad-added", self.on_pad_added, queue2)
+            queue2.link(scale)
+            scale.link(convert)
+            convert.link(rate)
+            rate.link(self.selector)
 
     def start(self):
         self.pipe.set_state(Gst.State.PLAYING)
@@ -108,11 +98,14 @@ class Pipeline:
     def stop(self):
         self.pipe.set_state(Gst.State.NULL)
 
-    def select(self, producer, source):
-        index = self.extra[producer][source]['index']
+    def select(self, url):
+        index = self.url_to_index[url]
+        print(url)
+        print(index)
+        print()
+        Gst.debug_bin_to_dot_file(self.pipe, Gst.DebugGraphDetails.CAPS_DETAILS, "pipe")
         selected_pad = self.selector.get_static_pad("sink_{}".format(index))
         self.selector.set_property('active-pad', selected_pad)
-
 
 
 class MainWindow(tk.Frame):
@@ -120,12 +113,10 @@ class MainWindow(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
 
-        self.producers = {}
-        self.producers_extra = {}
-
+        self.producers = None
         self.pipe = None
         
-        self.flow = None
+        self.tree = None
         self.master.title('Telecorpo Viewer')
         self.draw_query_form()
 
@@ -162,39 +153,42 @@ class MainWindow(tk.Frame):
 
         self.update_sources(server_address)
 
+    def on_selection(self, event):
+        item = self.tree.selection()[0]
+        self.pipe.select(self.tree.item(item, 'text'))
+
     def update_sources(self, server_address):
 
         def add_callback():
             self.master.after(1000, self.update_sources, server_address)
-
+        
         new_producers = query_producers(server_address)
         if self.producers == new_producers:
             add_callback()
             return
         
         self.producers = new_producers
-        self.producers_extra = {}
 
-        if self.flow:
-            self.flow.destroy()
-
-        self.flow = tk.Text(self.master, relief='flat')
-        self.flow.grid(row=1, sticky='nsew')
-        self.flow.configure(state='disabled')
+        if self.tree:
+            self.tree.destroy()
         
-        for producer in sorted(self.producers):
-            self.producers_extra[producer] = {}
-            for source in sorted(self.producers[producer]):
-                frame = ttk.Frame(self.master, width=40, height=30)
-                frame.bind('<Button-1>', lambda e: self.pipe.select(producer, source))
-                self.flow.window_create(tk.INSERT, window=frame)
-                # self.flow.insert("end", "   ")            
-                self.producers_extra[producer][source] = {'xid': frame.winfo_id()}
+        self.tree = ttk.Treeview(self.master)
+        self.tree.configure(selectmode='browse')
+        self.tree.bind('<<TreeviewSelect>>', self.on_selection)
+        self.tree.grid(row=1, sticky='nsew')
+
+        urls = []
+        for producer in self.producers:
+            for source in self.producers[producer]:
+                index = len(urls)
+                url = 'rtsp://{}:13371/{}'.format(producer, source)
+                self.tree.insert('', 'end', text=url)
+                urls.append(url)
 
         if self.pipe:
             self.pipe.stop()
 
-        self.pipe = Pipeline(self.producers, self.producers_extra)
+        self.pipe = Pipeline(None, urls)
         self.pipe.start()
 
         add_callback()
@@ -208,17 +202,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    Gst.init()
-    producers =   {'127.0.0.1': ['smpte', 'video0']}
-    extra = {
-        '127.0.0.1': {
-            'smpte': {'xid': 123},
-            'video0': {'xid': 123}}
-    }
-    pipe = Pipeline(producers, extra)
-    pipe.start()
-    time.sleep(2)
-    Gst.debug_bin_to_dot_file(pipe.pipe, Gst.DebugGraphDetails.CAPS_DETAILS, "pipe")
-    while True:
-        pass
+    main()
