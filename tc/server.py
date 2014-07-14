@@ -21,11 +21,11 @@ class ServerHandler(socketserver.BaseRequestHandler):
                 mounts = data.split()
                 if ipaddr in PRODUCERS:
                     resp = "Producer already connected"
-                    print("Rejected connection from {}".format(ipaddr))
+                    print("== cannot registrate {} again".format(ipaddr))
                 else:
                     PRODUCERS[ipaddr] = mounts
                     resp = "OK"
-                    print("New producer {} {}".format(ipaddr, ', '.join(mounts)))
+                    print("-> registrated {}: {}".format(ipaddr, ', '.join(mounts)))
         self.request.send(resp.encode())
 
 
@@ -43,7 +43,7 @@ def janitor():
                     assert data == "RTSP/1.0 200 OK"
             except Exception as err:
                 with PRODUCERS_LOCK:
-                    print("Removed {}".format(producer))
+                    print("<- removed {}".format(producer))
                     del PRODUCERS[producer]
                     break
 
