@@ -79,6 +79,8 @@ class MainWindow(tk.Frame):
         for source_name in self.available_sources:
             self.tree.insert('', 'end', text=source_name)
         self.tree.grid(row=0, sticky='nsew')
+        self.master.rowconfigure(0, weight=1)
+        self.master.columnconfigure(0, weight=1)
 
     def draw_connection_form(self): 
         self.form = ttk.Frame(self.master)

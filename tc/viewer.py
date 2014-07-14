@@ -176,6 +176,8 @@ class MainWindow(tk.Frame):
         self.tree.configure(selectmode='browse')
         self.tree.bind('<<TreeviewSelect>>', self.on_selection)
         self.tree.grid(row=1, sticky='nsew')
+        self.master.rowconfigure(1, weight=1)
+        self.master.columnconfigure(0, weight=1)
 
         urls = []
         for producer in self.producers:
