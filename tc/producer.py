@@ -21,13 +21,13 @@ def test_source(elem):
 
 
 def probe_sources():
-    sources = {'smpte': "videotestsrc is-live=true"}
+    sources = {'smpte': "videotestsrc do-timestamp=true is-live=true"}
 
     if test_source('dv1394src'):
-        sources['dv1394'] = "dv1394src ! dvdemux ! dvdec"
+        sources['dv1394'] = "dv1394src do-timestamp=true ! dvdemux ! dvdec"
 
     for dev in glob.glob('/dev/video*'):
-        elem = 'v4l2src device={}'.format(dev)
+        elem = 'v4l2src do-timestamp=true device={}'.format(dev)
         name = dev[5:]
         if test_source(elem):
             sources[name] = elem
@@ -48,6 +48,7 @@ def run_rtsp_server(sources):
         factory = GstRtspServer.RTSPMediaFactory()
         factory.set_launch(launch)
         factory.set_shared(True)
+        factory.set_suspend_mode(GstRtspServer.RTSPSuspendMode.NONE)
         mounts.add_factory("/{}".format(mount_point), factory)
 
     server.attach()
