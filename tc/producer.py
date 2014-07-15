@@ -21,21 +21,16 @@ def test_source(elem):
 
 
 def probe_sources():
-    sources = {'smpte': ("videotestsrc is-live=true ! queue"
-                        " ! x264enc preset=ultrafast tune=zerolatency"
-                        " ! queue ! rtph264pay")}
+    sources = {'smpte': "videotestsrc is-live=true"}
 
     if test_source('dv1394src'):
-        sources['dv1394'] = "dv1394src ! queue ! rtpdvpay"
+        sources['dv1394'] = "dv1394src ! dvdemux ! dvdec"
 
     for dev in glob.glob('/dev/video*'):
         elem = 'v4l2src device={}'.format(dev)
         name = dev[5:]
         if test_source(elem):
-            sources[name] = ("{} !  queue ! videoconvert"
-                             " ! video/x-raw,format=I420 ! queue"
-                             " ! x264enc preset=ultrafast tune=zerolatency"
-                             " ! queue ! rtph264pay".format(elem))
+            sources[name] = elem
     return sources
 
 
@@ -45,8 +40,13 @@ def run_rtsp_server(sources):
     
     mounts = server.get_mount_points()
     for mount_point, pipeline in sources.items():
+        launch = ("( {} ! queue ! videoconvert ! videoscale ! videorate"
+                  " ! video/x-raw,format=I420 ! queue"
+                  " ! x264enc speed-preset=ultrafast tune=zerolatency"
+                  " ! queue ! rtph264pay pt=96 name=pay0 )"
+                  "".format(pipeline))
         factory = GstRtspServer.RTSPMediaFactory()
-        factory.set_launch("( {} name=pay0 pt=96 )".format(pipeline))
+        factory.set_launch(launch)
         factory.set_shared(True)
         mounts.add_factory("/{}".format(mount_point), factory)
 
