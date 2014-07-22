@@ -82,7 +82,7 @@ class YoutubeStreamer:
             videoconvert ! videoscale ! {video_format} ! queue
             ! x264enc bitrate={self.vbitrate}
                       key-int-max=2
-                      bframes=2
+                      bframes=0
                       byte-stream=false
                       aud=true
                       cabac=true
