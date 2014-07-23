@@ -18,7 +18,6 @@ class CustomInstallCommand(install):
         for dst, src in copies:
             src = os.path.join(etcdir, src)
             if not os.path.isfile(dst):
-                print('cp {} {}'.format(src, dst))
                 shutil.copy(src, dst)
         
         links = ['libgstrtspserver-1.0.so.0',
@@ -27,7 +26,6 @@ class CustomInstallCommand(install):
             src = '/usr/lib/libgstrtspserver-1.0.so.0.203.0'
             dst = os.path.join('/usr/lib', link)
             if not os.path.isfile(dst):
-                print('ln -s {} {}'.format(src, dst))
                 os.symlink(src, dst)
 
 
