@@ -121,8 +121,9 @@ class MainWindow(tk.Frame):
         self.draw_query_form()
 
     def draw_query_form(self):
-        self.form = ttk.Frame()
+        self.form = ttk.Frame(self.master)
         self.form.grid(row=0, sticky='nsew')
+        self.master.rowconfigure(0, weight=1)
 
         def entry_placeholder(dummy):
             self.entry.delete(0, 'end')
@@ -132,7 +133,9 @@ class MainWindow(tk.Frame):
         self.entry.insert(0, "server address")
         self.entry.bind('<Return>', self.on_click)
         self.entry.bind('<FocusIn>', entry_placeholder)
-        self.entry.grid(row=0, column=0)
+        self.entry.grid(row=0, column=0, sticky='nsew')
+        self.form.columnconfigure(0, weight=1)
+        self.master.columnconfigure(0, weight=1)
 
         self.button = ttk.Button(self.form, text="Registrate",
                                  command=self.on_click)
@@ -147,10 +150,6 @@ class MainWindow(tk.Frame):
                                  "Failed to connect the server.\n{}".format(err))
             return
         
-        # disable manual query
-        self.entry.configure(state='disabled')
-        self.button.configure(state='disabled')
-
         self.update_sources(server_address)
 
     def on_selection(self, event):
@@ -163,6 +162,10 @@ class MainWindow(tk.Frame):
             self.master.after(1000, self.update_sources, server_address)
         
         new_producers = query_producers(server_address)
+        if self.form:
+            self.form.destroy()
+            self.form = None
+
         if self.producers == new_producers:
             add_callback()
             return
@@ -175,9 +178,8 @@ class MainWindow(tk.Frame):
         self.tree = ttk.Treeview(self.master)
         self.tree.configure(selectmode='browse')
         self.tree.bind('<<TreeviewSelect>>', self.on_selection)
-        self.tree.grid(row=1, sticky='nsew')
-        self.master.rowconfigure(1, weight=1)
-        self.master.columnconfigure(0, weight=1)
+        self.tree.grid(row=0, sticky='nsew')
+        self.master.rowconfigure(0, weight=1)
 
         urls = []
         for producer in self.producers:

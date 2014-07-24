@@ -95,7 +95,8 @@ class MainWindow(tk.Frame):
         self.entry.insert(0, "server address")
         self.entry.bind('<Return>', self.on_click)
         self.entry.bind('<FocusIn>', entry_placeholder)
-        self.entry.grid(row=0, column=0)
+        self.entry.grid(row=0, column=0, sticky='nsew')
+        self.form.columnconfigure(0, weight=1)
 
         self.button = ttk.Button(self.form, text="Registrate",
                                  command=self.on_click)
