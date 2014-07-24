@@ -127,6 +127,7 @@ class MainWindow(tk.Frame):
 
         self.producers = None
         self.pipe = None
+        self.video_window = None
         
         self.tree = None
         self.master.title('Telecorpo Viewer')
@@ -204,7 +205,9 @@ class MainWindow(tk.Frame):
         if self.pipe:
             self.pipe.stop()
         
-        self.video_window = VideoWindow()
+        if not self.video_window:
+            self.video_window = VideoWindow()
+
         self.pipe = Pipeline(self.video_window.get_xid(), urls)
         self.pipe.start()
 
