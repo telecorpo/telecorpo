@@ -45,11 +45,8 @@ class Pipeline:
     def on_sync_message(self, bus, msg):
         if msg.get_structure().get_name() != 'prepare-window-handle':
             return
-        if not msg.src.get_name().startswith('main-sink'):
-            return
-        # msg.src.set_window_handle(xid)
-        print(msg.src.get_name())
-        print()
+        if msg.src.get_name().startswith('main-sink'):
+            msg.src.set_window_handle(self.main_xid)
 
     def build(self):
         self.selector = Gst.ElementFactory.make('input-selector', None)
@@ -106,6 +103,21 @@ class Pipeline:
         Gst.debug_bin_to_dot_file(self.pipe, Gst.DebugGraphDetails.CAPS_DETAILS, "pipe")
         selected_pad = self.selector.get_static_pad("sink_{}".format(index))
         self.selector.set_property('active-pad', selected_pad)
+
+
+class VideoWindow(tk.Toplevel):
+    def __init__(self):
+        super().__init__()
+        self.is_fullscreen = False
+        self.configure(bg='#000')
+        self.bind('<Double-Button-1>', self.toggle_fullscreen)
+    
+    def toggle_fullscreen(self, event):
+        self.attributes('-fullscreen', self.is_fullscreen)
+        self.is_fullscreen = not self.is_fullscreen
+
+    def get_xid(self):
+        return self.winfo_id()
 
 
 class MainWindow(tk.Frame):
@@ -191,8 +203,9 @@ class MainWindow(tk.Frame):
 
         if self.pipe:
             self.pipe.stop()
-
-        self.pipe = Pipeline(None, urls)
+        
+        self.video_window = VideoWindow()
+        self.pipe = Pipeline(self.video_window.get_xid(), urls)
         self.pipe.start()
 
         add_callback()
