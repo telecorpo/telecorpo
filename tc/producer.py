@@ -36,12 +36,6 @@ def probe_sources():
 
 def run_rtsp_server(sources):
 
-    import sys
-    if sys.argv[1] == '--hack':
-        sources['router'] = ('udpsrc port=13375 ! queue !  application/x-rtp'
-                             ' ! rtpjitterbuffer latency=100 ! rtph264depay '
-                             ' ! avdec_h264 ')
-
     server = GstRtspServer.RTSPServer()
     server.set_service("13371")
     
