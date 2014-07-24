@@ -215,7 +215,7 @@ class MainWindow(tk.Frame):
 
 
 def main():
-    Gst.init()
+    Gst.init(None)
     root = tk.Tk()
     win = MainWindow(root)
     root.mainloop()

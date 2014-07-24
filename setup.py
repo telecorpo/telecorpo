@@ -37,5 +37,5 @@ setup(
         'install': CustomInstallCommand,
     },
     packages = find_packages(),
-    scripts = ['scripts/telecorpo'],
+    scripts = ['scripts/telecorpo', 'scripts/telecorpo-producer-fallback'],
 )

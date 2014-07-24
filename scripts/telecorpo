@@ -4,7 +4,7 @@ import sys, tkinter
 
 from tc import producer, viewer, server
 
-if len(sys.argv) == 1:
+if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] == '--hack'):
     master = tkinter.Tk()
     master.title('Telecorpo')
 

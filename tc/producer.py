@@ -35,6 +35,13 @@ def probe_sources():
 
 
 def run_rtsp_server(sources):
+
+    import sys
+    if sys.argv[1] == '--hack':
+        sources['router'] = ('udpsrc port=13375 ! queue !  application/x-rtp'
+                             ' ! rtpjitterbuffer latency=100 ! rtph264depay '
+                             ' ! avdec_h264 ')
+
     server = GstRtspServer.RTSPServer()
     server.set_service("13371")
     
@@ -68,7 +75,6 @@ class MainWindow(tk.Frame):
     
     def __init__(self, master):
         super().__init__(master)
-
         self.available_sources = probe_sources()
 
         self.master.title('Telecorpo Producer')
