@@ -14,7 +14,7 @@ apt-get install -qq python3 python3-tk python3-setuptools python3-gi \
 
 tag=https://api.github.com/repos/pslacerda/telecorpo/tags
 tag=$(wget -q -O - $tag | awk -F\" '/"name"/ {print $4}' \
-    | sort -rt. -k1,1 -k2,2 | head -1)
+    | sort -rnt. -k1,1 -k2,2 | head -1)
 
 tempdir=$(mktemp -d)
 tarball=https://github.com/pslacerda/telecorpo/archive/$tag.zip
