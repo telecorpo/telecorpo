@@ -47,14 +47,18 @@ def janitor():
                     del PRODUCERS[producer]
                     break
 
-
-if __name__ == '__main__':
+def main():
     janitor_thread = threading.Thread(target=janitor, daemon=True)
     janitor_thread.start()
 
     try:
         address = ('0.0.0.0', 13370)
         server = socketserver.TCPServer(address, ServerHandler)
+        print('Running...')
         server.serve_forever()
     except KeyboardInterrupt:
         pass
+
+
+if __name__ == '__main__':
+    main()
