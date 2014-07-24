@@ -13,7 +13,8 @@ class CustomInstallCommand(install):
 
         copies = [('/usr/share/gir-1.0', 'GstRtspServer-1.0.gir'),
                   ('/usr/lib/girepository-1.0', 'GstRtspServer-1.0.typelib'),
-                  ('/usr/lib/', 'libgstrtspserver-1.0.so.0.203.0')]
+                  ('/usr/lib/', 'libgstrtspserver-1.0.so.0.203.0'),
+                  ('/usr/share/applications', 'telecorpo.desktop')]
 
         for dst, src in copies:
             src = os.path.join(etcdir, src)
@@ -28,13 +29,13 @@ class CustomInstallCommand(install):
             if not os.path.isfile(dst):
                 os.symlink(src, dst)
 
-
 setup(
     name = 'telecorpo',
-    version = '0.9',
+    version = '0.10',
     
     cmdclass = {
         'install': CustomInstallCommand,
     },
     packages = find_packages(),
+    scripts = ['scripts/telecorpo'],
 )
