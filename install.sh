@@ -9,7 +9,7 @@ apt-get update -qq
 
 echo ${green}[2/4] ${reset}Installing dependencies
 apt-get install -qq python3 python3-tk python3-setuptools python3-gi \
-                    gstreamer1.0-{tools,libav,plugins-{good,bad,ugly}} \
+                    gstreamer1.0-{tools,libav,x,plugins-{good,bad,ugly}} \
                     gir1.2-{gstreamer-1.0,gtk-3.0}
 
 tag=https://api.github.com/repos/pslacerda/telecorpo/tags
