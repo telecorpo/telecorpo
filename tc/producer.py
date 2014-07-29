@@ -4,10 +4,11 @@ import ipaddress
 import socket
 import textwrap
 import threading
+import sys
 import tkinter as tk
 
 from tkinter import ttk, messagebox
-from gi.repository import Gst, GstRtspServer, GObject
+from gi.repository import Gst, GstRtspServer, GObject, Gtk, Gio
 
 
 def test_source(elem):
@@ -69,6 +70,139 @@ def registrate_producer(server_address, source_names):
         resp = sock.recv(1024).decode()
     if resp != "OK":
         raise Exception(resp)
+
+
+class Source:
+
+    def __init__(self, name, longname, description):
+        self.name = name
+        self.longname = longname
+        self.description = description
+
+    @staticmethod
+    def test_source_element(elem):
+        """
+        Tests if some source element can be set in PLAYING state.
+        
+        """
+        pipe = Gst.Pipeline()
+        sink = Gst.ElementFactory.make('fakesink')
+
+        pipe.add(elem)
+        pipe.add(sink)
+
+        elem.link(sink)
+        
+        pipe.set_state(Gst.State.PLAYING)
+
+        success = True
+        if Gst.StateChangeReturn.FAILURE == pipe.get_state(0)[0]:
+            success = False
+        pipe.set_state(Gst.State.NULL)
+        
+        return success
+
+    @classmethod
+    def find_sources(cls):
+        """
+        Returns all video sources found.
+
+        """
+        sources = []
+        
+        dv1394 = Gst.ElementFactory.make('dv1394src')
+        if cls.test_source_element(dv1394):
+            longname = dv1394.props.device_name
+            if longname == "Default":
+                longname = "Firewire bamera"
+            source = Source('dv1394', longname, 'dv1394src ! dvdemux ! dvdec')
+            sources.append(source)
+
+        for device in glob.glob('/dev/video*'):
+            v4l2 = Gst.ElementFactory.make('v4l2src')
+            v4l2.set_property('device', device)
+            if cls.test_source_element(v4l2):
+                name = device[5:]
+                longname = v4l2.get_property('device-name')
+                if not longname:
+                    longname = 'Video4Linux device'
+                source = Source(name, longname, 'v4l2src device=%s' % device)
+                sources.append(source)
+
+        if len(sources) == 0:
+            source = Source('smpte', 'SMPTE color bars',
+                            'videotestsrc is-live=true')
+            sources.append(source)
+
+        return sources
+
+    def __repr__(self):
+        return "Source<{}>".format(self.description)
+
+    def __str__(self):
+        return self.longname
+
+
+class ProducerWindow(Gtk.ApplicationWindow):
+
+    def __init__(self, app):
+        super().__init__(self, app, title="Telecorpo Producer")
+        
+        ## Draw the header bar
+        hb = Gtk.HeaderBar()
+        hb.props.show_close_button = True
+        hb.props.title = "Telecorpo Producer"
+        self.set_titlebar(hb)
+
+        refresh_button = Gtk.Button()
+        refresh_button.connect("clicked", self.on_refresh_clicked)
+        icon = Gio.ThemedIcon(name="gtk-refresh")
+        image = Gtk.Image.new_from_gicon(icon, Gtk.IconSize.BUTTON)
+        refresh_button.add(image)
+        hb.pack_end(refresh_button)
+
+        ## Draw the source tree
+        self.source_store = Gtk.ListStore(str, str, bool)
+        self.tree = Gtk.TreeView(self.source_store)
+        
+        self.tree.append_column(
+            Gtk.TreeViewColumn("Name", Gtk.CellRendererText(), text=0))
+
+        self.tree.append_column(
+            Gtk.TreeViewColumn("Description", Gtk.CellRendererText(), text=0))
+
+        self.tree.append_column(
+            Gtk.TreeViewColumn("Active", Gtk.CellRendererToggle(), text=0))
+
+
+
+    def on_refresh_clicked(self, button):
+        refresh_sources()
+
+    def refresh_sources(self):
+        self.sources = Source.find_sources()
+        self.source_store.clear()
+        for source in self.sources:
+            self.source_store.append(source.name, source.longname, False)
+
+
+class ProducerApplication(Gtk.Application):
+
+    def __init__(self):
+        Gtk.Application.__init__(self, application_id="telecorpo.producer")
+
+        self.connect("activate", self.on_activate)
+
+    def on_activate(self, event):
+        window = ProducerWindow(self)
+        window.show()
+
+
+if __name__ == '__main__':
+    app = ProducerApplication()
+    exit_status = app.run(sys.argv)
+    sys.exit(exit_status)
+
 
 
 class MainWindow(tk.Frame):
