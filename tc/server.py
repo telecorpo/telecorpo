@@ -38,6 +38,7 @@ def janitor():
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                     address = (producer, 13371)
                     sock.connect(address)
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                     sock.send(b"OPTIONS * RTSP/1.0\r\n")
                     data = sock.recv(4096).decode().split("\r\n")[0]
                     assert data == "RTSP/1.0 200 OK"
@@ -59,6 +60,3 @@ def main():
     except KeyboardInterrupt:
         pass
 
-
-if __name__ == '__main__':
-    main()

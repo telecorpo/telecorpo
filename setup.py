@@ -1,41 +1,21 @@
 from setuptools import setup, find_packages
-from setuptools.command.install import install
-
-import os
-import shutil
-
-
-class CustomInstallCommand(install):
-
-    def run(self):
-        install.run(self)
-        etcdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'etc')
-
-        copies = [('/usr/share/gir-1.0', 'GstRtspServer-1.0.gir'),
-                  ('/usr/lib/girepository-1.0', 'GstRtspServer-1.0.typelib'),
-                  ('/usr/lib/', 'libgstrtspserver-1.0.so.0.203.0'),
-                  ('/usr/share/applications', 'telecorpo.desktop')]
-
-        for dst, src in copies:
-            src = os.path.join(etcdir, src)
-            if not os.path.isfile(dst):
-                shutil.copy(src, dst)
-        
-        links = ['libgstrtspserver-1.0.so.0',
-                 'libgstrtspserver-1.0.so']
-        for link in links: 
-            src = '/usr/lib/libgstrtspserver-1.0.so.0.203.0'
-            dst = os.path.join('/usr/lib', link)
-            if not os.path.isfile(dst):
-                os.symlink(src, dst)
 
 setup(
-    name = 'telecorpo',
-    version = '0.10',
-    
-    cmdclass = {
-        'install': CustomInstallCommand,
+    name='telecorpo',
+    version='0.13',
+    packages=find_packages(),
+    package_data={
+        'tc': ['main.glade', 'producer.glade', 'viewer.glade']
     },
-    packages = find_packages(),
-    scripts = ['scripts/telecorpo', 'scripts/telecorpo-producer-fallback'],
-)
+    data_files=[
+        ('/usr/share/applications', ['data/telecorpo.desktop']),
+        ('/usr/share/gir-1.0', ['data/GstRtspServer-1.0.gir']),
+        ('/usr/lib', ['data/libgstrtspserver-1.0.so.0.400.0',
+                 'data/libgstrtspserver-1.0.so.0',
+                 'data/libgstrtspserver-1.0.so']),
+        ('/usr/lib/girepository-1.0', ['data/GstRtspServer-1.0.typelib'])
+    ],
+    entry_points={
+        'console_scripts': ['telecorpo=tc.main:main']
+    }
+)    

@@ -1,15 +1,11 @@
 
-import ipaddress
 import socket
-import time
-import tkinter as tk
-
-from tkinter import messagebox, ttk
-from gi.repository import Gst, Gtk, GObject, GdkX11, GstVideo, GstRtsp
-
+from gi.repository import GObject, Gdk, Gst, Gtk, GstVideo, GdkX11
+from tc import Application
 
 def query_producers(server_address):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(1)
         sock.connect((server_address, 13370))
         sock.send("*".encode())
         resp = sock.recv(4096).decode()
@@ -21,73 +17,87 @@ def query_producers(server_address):
     return producers
 
 
+def search_element(bin, klass):
+    iter = bin.iterate_elements()
+    while True:
+        status, elem = iter.next()
+        if isinstance(elem, klass):
+            return elem
+    return None
+
 
 class Pipeline:
 
-    def __init__(self, main_xid, urls):
+    def __init__(self, xid):
+        self.xid = xid
 
-        self.urls = urls
-        self.main_xid = main_xid
         self.pipe = Gst.Pipeline()
-        self.url_to_index = {}
+        self.index = {}
+        self.message_callback = lambda *args: print('%s', args)
 
-        self.bus = self.pipe.get_bus()
-        self.bus.enable_sync_message_emission()
-        self.bus.connect('sync-message::element', self.on_sync_message)
+        bus = self.pipe.get_bus()
+        bus.add_signal_watch()
+        bus.enable_sync_message_emission()
+        bus.connect('sync-message::element', self.on_sync_message)
+        bus.connect('message', self.on_message)
 
-        self.selector = None
-        self.build()
+        self.selector = Gst.ElementFactory.make('input-selector')
+        sink = Gst.ElementFactory.make('autovideosink')
+        sink.props.sync = False
 
-    def on_pad_added(self, element, pad, target):
-        sinkpad = target.get_compatible_pad(pad, pad.get_current_caps())
-        pad.link(sinkpad)
+        self.pipe.add(self.selector)
+        self.pipe.add(sink)
+
+        self.selector.link(sink)
 
     def on_sync_message(self, bus, msg):
         if msg.get_structure().get_name() != 'prepare-window-handle':
             return
-        if msg.src.get_name().startswith('main-sink'):
-            msg.src.set_window_handle(self.main_xid)
+        msg.src.set_window_handle(self.xid)
 
-    def build(self):
-        self.selector = Gst.ElementFactory.make('input-selector', None)
-        main_sink = Gst.ElementFactory.make('autovideosink', 'main-sink') 
+    def on_message(self, bus, msg):
+        if msg.type == Gst.MessageType.ERROR:
+            self.pipe.set_state(Gst.State.NULL)
+            error, text = msg.parse_error()
+            self.message_callback('ERROR: %s\n%s' % (error, text))
+        elif msg.type == Gst.MessageType.WARNING:
+            error, text = msg.parse_warning()
+            self.message_callback('WARNING: %s\n%s' % (error, text))
 
-        self.pipe.add(self.selector)
-        self.pipe.add(main_sink)
+    def add_source(self, producer, src_elem):
+        queue1 = Gst.ElementFactory.make("queue", None)
+        decode = Gst.ElementFactory.make("decodebin", None)
+        queue2 = Gst.ElementFactory.make("queue", None)
+        scale = Gst.ElementFactory.make("videoscale", None)
+        convert = Gst.ElementFactory.make("videoconvert", None)
+        rate = Gst.ElementFactory.make("videorate", None)
 
-        self.selector.link(main_sink)
+        self.pipe.add(src_elem)
+        self.pipe.add(queue1)
+        self.pipe.add(decode)
+        self.pipe.add(queue2)
+        self.pipe.add(scale)
+        self.pipe.add(convert)
+        self.pipe.add(rate)
 
-        index = -1
-        for url in self.urls:
-            index += 1
-            self.url_to_index[url] = index
+        def on_pad_added(element, pad, target):
+            sinkpad = target.get_compatible_pad(pad, pad.get_current_caps())
+            pad.link(sinkpad)
 
-            src = Gst.ElementFactory.make("rtspsrc", None)
-            src.set_property("latency", 100)
-            src.set_property("location", url)
+        src_elem.connect("pad-added", on_pad_added, queue1)
+        queue1.link(decode)
+        decode.connect("pad-added", on_pad_added, queue2)
+        queue2.link(scale)
+        scale.link(convert)
+        convert.link(rate)
+        rate.link(self.selector)
 
-            queue1 = Gst.ElementFactory.make("queue", None)
-            decode = Gst.ElementFactory.make("decodebin", None)
-            queue2 = Gst.ElementFactory.make("queue", None)
-            scale = Gst.ElementFactory.make("videoscale", None)
-            convert = Gst.ElementFactory.make("videoconvert", None)
-            rate = Gst.ElementFactory.make("videorate", None)
-
-            self.pipe.add(src)
-            self.pipe.add(queue1)
-            self.pipe.add(decode)
-            self.pipe.add(queue2)
-            self.pipe.add(scale)
-            self.pipe.add(convert)
-            self.pipe.add(rate)
-
-            src.connect("pad-added", self.on_pad_added, queue1)
-            queue1.link(decode)
-            decode.connect("pad-added", self.on_pad_added, queue2)
-            queue2.link(scale)
-            scale.link(convert)
-            convert.link(rate)
-            rate.link(self.selector)
+        self.index[producer] = len(self.index)
+    
+    def select(self, producer):
+        index = self.index[producer]
+        selected_pad = self.selector.get_static_pad("sink_{}".format(index))
+        self.selector.set_property('active-pad', selected_pad)
 
     def start(self):
         self.pipe.set_state(Gst.State.PLAYING)
@@ -95,131 +105,145 @@ class Pipeline:
     def stop(self):
         self.pipe.set_state(Gst.State.NULL)
 
-    def select(self, url):
-        index = self.url_to_index[url]
-        print(url)
-        print(index)
-        print()
-        Gst.debug_bin_to_dot_file(self.pipe, Gst.DebugGraphDetails.CAPS_DETAILS, "pipe")
-        selected_pad = self.selector.get_static_pad("sink_{}".format(index))
-        self.selector.set_property('active-pad', selected_pad)
+    def set_message_callback(self, callback):
+        self.message_callback = callback
 
 
-class VideoWindow(tk.Toplevel):
+
+class Viewer(Application):
+    
+    glade_file = 'viewer.glade'
+
     def __init__(self):
         super().__init__()
+        self.pipeline = None
+        self.latency = 100
+        
+        video_window = self.builder.get_object('video-window')
+        video_window.show_all()
+        
+        display = self.builder.get_object('display')
+        self.xid = display.props.window.get_xid()
+
         self.is_fullscreen = False
-        self.configure(bg='#000')
-        self.bind('<Double-Button-1>', self.toggle_fullscreen)
-    
-    def toggle_fullscreen(self, event):
-        self.attributes('-fullscreen', self.is_fullscreen)
-        self.is_fullscreen = not self.is_fullscreen
 
-    def get_xid(self):
-        return self.winfo_id()
+    def on_video_window_button_press_event(self, widget, event):
+        if event.button == 1:
+            video_window = self.builder.get_object('video-window')
+            if self.is_fullscreen:
+                video_window.unfullscreen()
+            else:
+                video_window.fullscreen()
+            self.is_fullscreen = not self.is_fullscreen
 
-
-class MainWindow(tk.Frame):
-
-    def __init__(self, master):
-        super().__init__(master)
-
-        self.producers = None
-        self.pipe = None
-        self.video_window = None
-        
-        self.tree = None
-        self.master.title('Telecorpo Viewer')
-        self.draw_query_form()
-
-    def draw_query_form(self):
-        self.form = ttk.Frame(self.master)
-        self.form.grid(row=0, sticky='nsew')
-        self.master.rowconfigure(0, weight=1)
-
-        def entry_placeholder(dummy):
-            self.entry.delete(0, 'end')
-            self.entry.unbind('<FocusIn>')
-
-        self.entry = ttk.Entry(self.form)
-        self.entry.insert(0, "server address")
-        self.entry.bind('<Return>', self.on_click)
-        self.entry.bind('<FocusIn>', entry_placeholder)
-        self.entry.grid(row=0, column=0, sticky='nsew')
-        self.form.columnconfigure(0, weight=1)
-        self.master.columnconfigure(0, weight=1)
-
-        self.button = ttk.Button(self.form, text="Registrate",
-                                 command=self.on_click)
-        self.button.grid(row=0, column=1)
-
-    def on_click(self, dummy=None): 
+    def connect(self, address):
         try:
-            server_address = str(ipaddress.ip_address(self.entry.get().strip()))
-            query_producers(server_address)
+            producers = query_producers(address)
         except Exception as err:
-            messagebox.showerror("Error",
-                                 "Failed to connect the server.\n{}".format(err))
+            raise Exception("Couldn't connect to server.\n%s" % str(err))
+        
+        self.server_address = address
+        self.refresh()
+        GObject.timeout_add_seconds(1, self.refresh)
+
+    def refresh(self):
+        source_store = self.builder.get_object('source-store')
+        old_producers = set()
+        rtsp_srcs = {}
+        
+        for _, addr, mp, _, _, _, _, rtspsrc in source_store:
+            producer = (addr, mp)
+            old_producers.add(producer)
+            rtsp_srcs[producer] = rtspsrc
+        
+        server_producers = query_producers(self.server_address)
+        new_producers = set()
+
+        for addr, mount_points in server_producers.items():
+            for mp in mount_points:
+                producer = (addr, mp)
+                new_producers.add(producer)
+        
+        if old_producers != new_producers:
+            self.update_sources(new_producers)
+        else:
+            # self.update_stats()
+            pass
+        return True
+    
+    def update_sources(self, producers):
+        source_store = self.builder.get_object('source-store')
+        source_store.clear()
+        
+        if self.pipeline:
+            self.pipeline.stop()
+        self.pipeline = Pipeline(self.xid)
+        self.pipeline.set_message_callback(self.on_pipeline_message)
+
+        for addr, mp in producers:
+            url = "rtsp://%s:13371/%s" % (addr, mp)
+
+            rtspsrc = Gst.ElementFactory.make('rtspsrc')
+            rtspsrc.props.latency = self.latency
+            rtspsrc.props.location = url
+
+            row = [url, addr, mp, '-', '-', '-', '-', rtspsrc]
+            source_store.append(row)
+
+            self.pipeline.add_source((addr, mp), rtspsrc)
+
+        self.pipeline.start()
+
+    def update_stats(self):
+        source_store = self.builder.get_object('source-store')
+
+        for i in range(len(source_store)):
+            url, addr, mp, _, _, _, _, rtspsrc = source_store[i]
+
+            rtpbin_class = Gst.ElementFactory.make('rtpbin').__class__
+            rtpbin = search_element(rtspsrc, rtpbin_class)
+            assert rtpbin
+
+            jitter_class = Gst.ElementFactory.make('rtpjitterbuffer').__class__
+            jitter = search_element(rtpbin, jitter_class)
+            assert jitter
+
+            #FIXME dont do this every second!!!
+            jitter.props.do_retransmission = True
+            
+            stats = jitter.props.stats
+
+            rtx = str(stats.get_value('rtx-count'))
+            rtx_success = str(stats.get_value('rtx-success-count'))
+            rtx_per_packet = str(stats.get_value('rtx-per-packet'))
+            rtx_rtt = str(stats.get_value('rtx-rtt'))
+            
+            source_store[i] = [url, addr, mp, rtx, rtx_success, rtx_per_packet,
+                               rtx_rtt, rtspsrc]
+    
+    def on_pipeline_message(self, message):
+        message_buffer = self.builder.get_object('message-buffer')
+        bounds = message_buffer.get_bounds()
+        text = message_buffer.get_text(bounds[0], bounds[1], True)
+        message_buffer.set_text(text + '\n\n' + message)
+
+    def on_treeview_selection_changed(self, tree_selection):
+        source_store = self.builder.get_object('source-store')
+        if len(source_store) == 0:
             return
+        path = tree_selection.get_selected_rows()[1][0]
+
+        addr = source_store[path][1]
+        mp = source_store[path][2]
         
-        self.update_sources(server_address)
+        producer = (addr, mp)
+        self.pipeline.select(producer)
 
-    def on_selection(self, event):
-        item = self.tree.selection()[0]
-        self.pipe.select(self.tree.item(item, 'text'))
+    def on_config_button_clicked(self, button):
+        source_store = self.builder.get_object('source-store')
+        self.latency = self.builder.get_object('latency-spin').get_value_as_int()
 
-    def update_sources(self, server_address):
-
-        def add_callback():
-            self.master.after(1000, self.update_sources, server_address)
+        source_store.clear()
+        self.refresh()
         
-        new_producers = query_producers(server_address)
-        if self.form:
-            self.form.destroy()
-            self.form = None
 
-        if self.producers == new_producers:
-            add_callback()
-            return
-        
-        self.producers = new_producers
-
-        if self.tree:
-            self.tree.destroy()
-        
-        self.tree = ttk.Treeview(self.master)
-        self.tree.configure(selectmode='browse')
-        self.tree.bind('<<TreeviewSelect>>', self.on_selection)
-        self.tree.grid(row=0, sticky='nsew')
-        self.master.rowconfigure(0, weight=1)
-
-        urls = []
-        for producer in self.producers:
-            for source in self.producers[producer]:
-                index = len(urls)
-                url = 'rtsp://{}:13371/{}'.format(producer, source)
-                self.tree.insert('', 'end', text=url)
-                urls.append(url)
-
-        if self.pipe:
-            self.pipe.stop()
-        
-        if not self.video_window:
-            self.video_window = VideoWindow()
-
-        self.pipe = Pipeline(self.video_window.get_xid(), urls)
-        self.pipe.start()
-
-        add_callback()
-
-
-def main():
-    Gst.init(None)
-    root = tk.Tk()
-    win = MainWindow(root)
-    root.mainloop()
-
-
-if __name__ == '__main__':
-    main()

@@ -1,4 +1,5 @@
 
+from collections import namedtuple
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import GObject, Gst
@@ -6,16 +7,25 @@ from gi.repository import GObject, Gst
 GObject.threads_init()
 Gst.init()
 
+Profile = namedtuple('Profile', [
+    'width',
+    'height',
+    'max_bitrate',
+    'min_bitrate',
+    'recommended_bitrate',
+])
+
+_resolutions = {
+    '240p': (426, 240, 300, 700, 400),
+    '360p': (640, 360, 400, 1000, 750),
+    '480p': (854, 480, 500, 2000, 1000),
+    '720p': (1280, 720, 1500, 4000, 2500),
+    '1080p': (1920, 1080, 3000, 6000, 4500)
+}
+
 
 class YoutubeStreamer:
     
-    _resolutions = {
-        '240p': (426, 240, 300, 700, 400),
-        '360p': (640, 360, 400, 1000, 750),
-        '480p': (854, 480, 500, 2000, 1000),
-        '720p': (1280, 720, 1500, 4000, 2500),
-        '1080p': (1920, 1080, 3000, 6000, 4500)
-    }
 
     _server_url = 'rtmp://a.rtmp.youtube.com/live2'
     _backup_url = 'rtmp://b.rtmp.youtube.com/live2?backup=1'
@@ -44,6 +54,8 @@ class YoutubeStreamer:
             message = "{} do not allow this bitrate ({})".format(resolution,
                                                                  bitrate)
             raise ValueError(message)
+
+        if backup:
         
         self.abitrate = 128
         self.vbitrate = bitrate - self.abitrate

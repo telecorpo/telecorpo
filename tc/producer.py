@@ -1,17 +1,7 @@
 
 import socket
-
-from ipaddress import IPv4Address
-from gi.repository import GObject, Gst, GstRtspServer, Gtk, GUdev
-
-
-def connect(server_address, source_names):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.connect((server_address, 13370))
-        sock.send(" ".join(source_names).encode())
-        resp = sock.recv(1024).decode()
-    if resp != "OK":
-        raise Exception(resp)
+from gi.repository import GLib, Gst, GstRtsp, GstRtspServer, GUdev
+from tc import Application
 
 
 def run_rtsp_server(sources):
@@ -27,20 +17,11 @@ def run_rtsp_server(sources):
                   "".format(pipeline))
         factory = GstRtspServer.RTSPMediaFactory()
         factory.set_launch(launch)
-        factory.set_shared(True)
-        factory.set_suspend_mode(GstRtspServer.RTSPSuspendMode.NONE)
+        factory.props.shared = True
+        # factory.props.profiles = GstRtsp.RTSPProfile.AVPF
         mounts.add_factory("/{}".format(mount_point), factory)
 
-    server.attach()
-    
-    consumers = [] 
-    for mount_point, _ in sources:
-        pipe = Gst.parse_launch("""
-            rtspsrc location=rtsp://127.0.0.1:13371/%s ! fakesink
-        """ % mount_point)
-        pipe.set_state(Gst.State.PLAYING)
-        consumers.append(pipe)
-    return server, consumers
+    return server.attach()
 
 
 def test_source_element(launch):
@@ -53,102 +34,78 @@ def test_source_element(launch):
     return ok
 
 
-class Producer:
+def find_devices():
+    udev = GUdev.Client()
+    for device in udev.query_by_subsystem('video4linux'):
+        launch = "v4l2src device=%s" % device.get_device_file()
+        if test_source_element(launch):
+            mount_point = device.get_name()
+            description = device.get_property('ID_V4L_PRODUCT')
+            yield (mount_point, description, launch)
+    
+    yield ("desktop", "Desktop sharing", "ximagesrc")
+    yield ("smpte", "SMPTE color bars", "videotestsrc is-live=true")
+
+
+def registrate_producer(server_address, mount_points):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.settimeout(1)
+        sock.connect((server_address, 13370))
+        sock.send(" ".join(mount_points).encode())
+        resp = sock.recv(1024).decode()
+    if resp != "OK":
+        raise Exception(resp)
+
+
+class Producer(Application):
+
+    glade_file = 'producer.glade'
 
     def __init__(self):
-        self.builder = Gtk.Builder()
-        self.builder.add_from_file('producer.glade')
-        self.builder.connect_signals(self)
-        self.window = self.builder.get_object('main-window')
-        self.source_store = self.builder.get_object('source-store')
+        super().__init__()
+        for mount_point, description, launch in find_devices():
+            self.add_device(mount_point, description, launch)
+
+    def add_device(self, mount_point, description, launch):
+        source_store = self.builder.get_object('source-store')
+        source_store.append([mount_point, description, False, launch])
     
-    @classmethod
-    def main(cls):
-        GObject.threads_init()
-        Gst.init()
-        
-        producer = cls()
-        producer.window.show_all()
-
-        Gtk.main()
-
-    def error(self, message):
-        dialog = Gtk.MessageDialog(self.window, 0, Gtk.MessageType.ERROR,
-                Gtk.ButtonsType.OK, "Error")
-        dialog.format_secondary_text(message)
-        dialog.run()
-        dialog.destroy()
-
-    def add_device(self, name, description, launch):
-        self.source_store.append([name, description, False, launch])
-    
-    def connect(self):
-        address = self.builder.get_object('address-entry').get_text().strip()
-        try:
-            IPv4Address(address)
-        except ValueError:
-            self.error("'%s' does not appear to be a valid IPv4 address"
-                    % address)
-            return
-        
-        sources = []
-        for name, description, enable, launch in self.source_store:
+    def get_selected_sources(self):
+        source_store = self.builder.get_object('source-store')
+        for mount_point, description, enable, launch in source_store:
             if enable:
-                sources.append((name, launch))
+                yield (mount_point, launch)
+    
+    def connect(self, address):
+        """
+        Registrate this producer on server.
+
+        """
+        sources = list(self.get_selected_sources())
+        mount_points = [mp for mp, _ in sources] 
 
         if len(sources) == 0:
-            self.error("Select at least one video source")
-            return
-
-        refresh_button = self.builder.get_object('refresh-button')
-        refresh_button.set_sensitive(False)
-
+            raise Exception("Select a least one video source")
+        
+        rtsp_id = run_rtsp_server(sources)
+        
+        try:
+            registrate_producer(address, mount_points)
+        except:
+            GLib.source_remove(rtsp_id)
+            raise
+        
         treeview = self.builder.get_object('treeview')
         treeview.set_sensitive(False)
         
-        # keep object to avoid garbage collection
-        self.dummy = run_rtsp_server(sources)
+        self.__pipelines = []
+        for mount_point in mount_points:
+            url = 'rtsp://127.0.0.1:13371/%s' % mount_point
+            pipe = Gst.parse_launch("rtspsrc location=%s ! fakesink" % url)
+            pipe.set_state(Gst.State.PLAYING)
+            self.__pipelines.append(pipe)
 
-        try: 
-            connect(address, [name for name, launch in sources])
-        except Exception as err:
-            self.error("Could not connect to server.\n%s" % err)
-            return
-
-        form_box = self.builder.get_object('form-box')
-        form_box.set_sensitive(False)
-
-    def refresh(self):
-        self.source_store.clear()
-        udev = GUdev.Client()
-        for device in udev.query_by_subsystem('video4linux'):
-            launch = "v4l2src device=%s" % device.get_device_file()
-            if test_source_element(launch):
-                name = device.get_name()
-                description = device.get_property('ID_V4L_PRODUCT')
-                self.add_device(name, description, launch)
-
-        self.add_device("smpte", "SMPTE color bars",
-                "videotestsrc is-live=true")
-
-        self.add_device("desktop", "Desktop sharing",
-                "ximagesrc ! videoconvert ! videoscale"
-                " ! video/x-raw,width=1280,height=720")
-   
     def on_enablecell_toggled(self, cell_renderer, path):
-        self.source_store[path][2] = not self.source_store[path][2]
-
-    def on_refresh_button_clicked(self, button):
-        self.refresh()
-
-    def on_connect_button_clicked(self, button):
-        self.connect()
-
-    def on_main_window_delete_event(self, *args):
-        Gtk.main_quit(*args)
-
-
-if __name__ == '__main__':
-    producer = Producer()
-    producer.main()
+        source_store = self.builder.get_object('source-store')
+        source_store[path][2] = not source_store[path][2]
 
