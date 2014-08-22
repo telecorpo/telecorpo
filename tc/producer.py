@@ -42,7 +42,12 @@ def find_devices():
             mount_point = device.get_name()
             description = device.get_property('ID_V4L_PRODUCT')
             yield (mount_point, description, launch)
-    
+    for device in udev.query_by_subsystem('firewire'):
+        launch = "dv1394src guid=%s ! dvdemux ! dvdec" % device.get_sysfs_attr('guid')
+        if test_source_element(launch):
+            mount_point = device.get_name()
+            description = device.get_sysfs_attr('model_name')
+            yield (mount_point, description, launch)
     yield ("desktop", "Desktop sharing", "ximagesrc")
     yield ("smpte", "SMPTE color bars", "videotestsrc is-live=true")
 

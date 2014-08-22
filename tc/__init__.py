@@ -18,7 +18,7 @@ class Application:
     @classmethod
     def main(cls):
         GObject.threads_init()
-        Gst.init()
+        Gst.init(None)
 
         app = cls()
         app.window.show_all()
