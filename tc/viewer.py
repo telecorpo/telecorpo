@@ -24,8 +24,9 @@ def query_producers(server_address):
 
 class Pipeline:
 
-    def __init__(self, main_xid, urls):
-
+    def __init__(self, main_xid, latency, urls):
+        
+        self.latency = latency
         self.urls = urls
         self.main_xid = main_xid
         self.pipe = Gst.Pipeline()
@@ -63,7 +64,7 @@ class Pipeline:
             self.url_to_index[url] = index
 
             src = Gst.ElementFactory.make("rtspsrc", None)
-            src.set_property("latency", 100)
+            src.set_property("latency", self.latency)
             src.set_property("location", url)
 
             queue1 = Gst.ElementFactory.make("queue", None)
@@ -149,14 +150,18 @@ class MainWindow(tk.Frame):
         self.entry.grid(row=0, column=0, sticky='nsew')
         self.form.columnconfigure(0, weight=1)
         self.master.columnconfigure(0, weight=1)
+        
+        self.spin = tk.Spinbox(self.form, from_=5, to=1000)
+        self.spin.grid(row=0, column=1)
 
         self.button = ttk.Button(self.form, text="Registrate",
                                  command=self.on_click)
-        self.button.grid(row=0, column=1)
+        self.button.grid(row=0, column=2)
 
     def on_click(self, dummy=None): 
         try:
             server_address = str(ipaddress.ip_address(self.entry.get().strip()))
+            self.latency = int(self.spin.get())
             query_producers(server_address)
         except Exception as err:
             messagebox.showerror("Error",
@@ -208,7 +213,7 @@ class MainWindow(tk.Frame):
         if not self.video_window:
             self.video_window = VideoWindow()
 
-        self.pipe = Pipeline(self.video_window.get_xid(), urls)
+        self.pipe = Pipeline(self.video_window.get_xid(), self.latency, urls)
         self.pipe.start()
 
         add_callback()
