@@ -34,17 +34,18 @@ def probe_sources():
     return sources
 
 
-def run_rtsp_server(sources):
+def run_rtsp_server(sources, framerate):
     server = GstRtspServer.RTSPServer()
     server.set_service("13371")
     
     mounts = server.get_mount_points()
     for mount_point, pipeline in sources.items():
         launch = ("( {} ! queue ! videoconvert ! videoscale ! videorate"
-                  " ! video/x-raw,format=I420 ! queue"
+                  " ! video/x-raw,format=I420,framerate={} ! queue"
                   " ! x264enc speed-preset=ultrafast tune=zerolatency"
                   " ! queue ! rtph264pay pt=96 name=pay0 )"
-                  "".format(pipeline))
+                  "".format(pipeline, framerate))
+        print(launch)
         factory = GstRtspServer.RTSPMediaFactory()
         factory.set_launch(launch)
         factory.set_shared(True)
@@ -97,9 +98,14 @@ class MainWindow(tk.Frame):
         self.entry.grid(row=0, column=0, sticky='nsew')
         self.form.columnconfigure(0, weight=1)
 
+        self.spin = tk.Spinbox(self.form, from_=25, to=60)
+        self.spin.delete(0, tk.END)
+        self.spin.insert(0, "30")
+        self.spin.grid(row=0, column=1)
+
         self.button = ttk.Button(self.form, text="Registrate",
                                  command=self.on_click)
-        self.button.grid(row=0, column=1)
+        self.button.grid(row=0, column=2)
 
     def get_selected_sources(self):
         sources = {}
@@ -120,8 +126,9 @@ class MainWindow(tk.Frame):
         self.tree.configure(selectmode='none')
 
         # run RTSP server
+        framerate = "%d/1" % int(self.spin.get())
         rtsp_thread = threading.Thread(target=run_rtsp_server,
-                                       args=(selected_sources,),
+                                       args=(selected_sources, framerate),
                                        daemon=True)
         rtsp_thread.start()
 
