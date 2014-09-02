@@ -97,11 +97,15 @@ class MainWindow(tk.Frame):
         self.entry.bind('<FocusIn>', entry_placeholder)
         self.entry.grid(row=0, column=0, sticky='nsew')
         self.form.columnconfigure(0, weight=1)
+        
+        config_form = ttk.Frame(self.form)
+        config_form.grid(row=1, sticky='nsew')
+    
+        label = tk.Label(config_form, text='fps')
+        label.pack()
 
-        self.spin = tk.Spinbox(self.form, from_=25, to=60)
-        self.spin.delete(0, tk.END)
-        self.spin.insert(0, "30")
-        self.spin.grid(row=0, column=1)
+        self.spin = tk.Spinbox(config_form, from_=25, to=60)
+        self.spin.pack()
 
         self.button = ttk.Button(self.form, text="Registrate",
                                  command=self.on_click)

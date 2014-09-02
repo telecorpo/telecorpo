@@ -151,12 +151,18 @@ class MainWindow(tk.Frame):
         self.form.columnconfigure(0, weight=1)
         self.master.columnconfigure(0, weight=1)
         
-        self.spin = tk.Spinbox(self.form, from_=5, to=1000)
-        self.spin.grid(row=0, column=1)
+        config_form = ttk.Frame(self.form)
+        config_form.grid(row=1, sticky='nsew')
+        
+        label = tk.Label(config_form, text='cache [ms]')
+        label.pack()
+
+        self.spin = tk.Spinbox(config_form, from_=5, to=1000)
+        self.spin.pack()
 
         self.button = ttk.Button(self.form, text="Registrate",
                                  command=self.on_click)
-        self.button.grid(row=0, column=2)
+        self.button.grid(row=0, column=1)
 
     def on_click(self, dummy=None): 
         try:
