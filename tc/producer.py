@@ -41,8 +41,8 @@ def run_rtsp_server(sources, framerate):
     mounts = server.get_mount_points()
     for mount_point, pipeline in sources.items():
         launch = ("( {} ! queue ! videoconvert ! videoscale ! videorate"
-                  " ! video/x-raw,format=I420,framerate={} ! queue"
-                  " ! x264enc speed-preset=ultrafast tune=zerolatency"
+                  " ! video/x-raw,format=I420 ! queue"
+                  " ! x264enc intra-refresh=true key-int-max=12 speed-preset=ultrafast tune=zerolatency"
                   " ! queue ! rtph264pay pt=96 name=pay0 )"
                   "".format(pipeline, framerate))
         print(launch)
