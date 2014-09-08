@@ -34,7 +34,8 @@ def probe_sources():
     return sources
 
 
-def run_rtsp_server(sources, framerate):
+def run_rtsp_server(sources, keyint):
+
     server = GstRtspServer.RTSPServer()
     server.set_service("13371")
     
@@ -42,10 +43,9 @@ def run_rtsp_server(sources, framerate):
     for mount_point, pipeline in sources.items():
         launch = ("( {} ! queue ! videoconvert ! videoscale ! videorate"
                   " ! video/x-raw,format=I420 ! queue"
-                  " ! x264enc intra-refresh=true key-int-max=12 speed-preset=ultrafast tune=zerolatency"
+                  " ! x264enc intra-refresh=true key-int-max={} speed-preset=ultrafast tune=zerolatency"
                   " ! queue ! rtph264pay pt=96 name=pay0 )"
-                  "".format(pipeline, framerate))
-        print(launch)
+                  "".format(pipeline, keyint))
         factory = GstRtspServer.RTSPMediaFactory()
         factory.set_launch(launch)
         factory.set_shared(True)
@@ -107,6 +107,15 @@ class MainWindow(tk.Frame):
         self.spin = tk.Spinbox(config_form, from_=25, to=60)
         self.spin.pack()
 
+        config_form = ttk.Frame(self.form)
+        config_form.grid(row=1, sticky='nsew')
+
+        label = tk.Label(config_form, text='key-int-max')
+        label.pack()
+
+        self.spin = tk.Spinbox(config_form, from_=0, to=120)
+        self.spin.pack()
+
         self.button = ttk.Button(self.form, text="Registrate",
                                  command=self.on_click)
         self.button.grid(row=0, column=2)
@@ -128,11 +137,13 @@ class MainWindow(tk.Frame):
         
         # disable source selection
         self.tree.configure(selectmode='none')
+        
+        keyint = int(self.spin.get())
 
         # run RTSP server
         framerate = "%d/1" % int(self.spin.get())
         rtsp_thread = threading.Thread(target=run_rtsp_server,
-                                       args=(selected_sources, framerate),
+                                       args=(selected_sources, keyint),
                                        daemon=True)
         rtsp_thread.start()
 
