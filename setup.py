@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='telecorpo',
-    version='0.13',
+    version='0.21',
     packages=find_packages(),
     package_data={
         'tc': ['main.glade', 'producer.glade', 'viewer.glade']
