@@ -16,6 +16,6 @@ setup(
         ('/usr/lib/girepository-1.0', ['data/GstRtspServer-1.0.typelib'])
     ],
     entry_points={
-        'console_scripts': ['telecorpo=tc.main:main']
+        'console_scripts': ['telecorpo=tc.application:main']
     }
 )    
