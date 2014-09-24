@@ -91,10 +91,10 @@ class Viewer:
         
         control_window = Gtk.Window()
         control_window.connect("delete-event", Gtk.main_quit)
-        flowbox = Gtk.FlowBox(homogeneous=True)
-        control_window.add(flowbox)
+        grid = Gtk.Grid()
+        control_window.add(grid)
         
-        for url in urls:
+        for i, url in enumerate(urls):
             area = Gtk.DrawingArea()
             area.set_size_request(400, 300)
             self._drawingareas[url] = [area,]
@@ -104,7 +104,7 @@ class Viewer:
 
             area.set_events(Gdk.EventMask.BUTTON_PRESS_MASK)
             area.connect('button-press-event', on_click, url)
-            flowbox.add(area)
+            grid.attach(area, i//3, i%3, 1, 1)
         
         video_window = Gtk.Window()
         notebook = Gtk.Notebook(show_tabs=False)

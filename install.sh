@@ -28,8 +28,6 @@ echo ${green}[4/4] ${reset}Running setuptools
 (cd $tempdir/*/data \
     && cp -d telecorpo.desktop      /usr/share/applications \
     && cp -d GstRtspServer-1.0.gir  /usr/share/gir-1.0      \
-    && cp -d libgstrtspserver-1.0.so.0.400.0 /usr/lib       \
-    && cp -d libgstrtspserver-1.0.so.0                      \
-    && cp -d libgstrtspserver-1.0.so                        \
-    && cp -d GstRtspServer-1.0.typelib /usr/lib/girepository-1.0
+    && cp -d libgstrtspserver-1.0.so* /usr/lib       \
+    && cp -d GstRtspServer-1.0.typelib /usr/lib/girepository-1.0)
 rm -rf $tempdir
