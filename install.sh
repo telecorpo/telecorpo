@@ -25,4 +25,11 @@ echo ${green}[3/4] ${reset}Downloading ${bold}version $tag${reset} and extractin
 echo ${green}[4/4] ${reset}Running setuptools
 (cd $tempdir/*/ && python3 setup.py -q install)
 
+(cd $tempdir/*/data \
+    && cp -d telecorpo.desktop      /usr/share/applications \
+    && cp -d GstRtspServer-1.0.gir  /usr/share/gir-1.0      \
+    && cp -d libgstrtspserver-1.0.so.0.400.0 /usr/lib       \
+    && cp -d libgstrtspserver-1.0.so.0                      \
+    && cp -d libgstrtspserver-1.0.so                        \
+    && cp -d GstRtspServer-1.0.typelib /usr/lib/girepository-1.0
 rm -rf $tempdir
