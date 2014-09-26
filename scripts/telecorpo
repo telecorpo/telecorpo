@@ -22,6 +22,10 @@ if len(sys.argv) == 1:
 
     master.mainloop()
 
-if len(sys.argv) == 2 and sys.argv[1] == 'server':
-    server.main()
-
+elif len(sys.argv) == 2:
+    if sys.argv[1] == 'server':
+        server.main()
+    elif sys.argv[1] == 'producer':
+        producer.main()
+    elif sys.argv[1] == 'viewer':
+        viewer.main()
