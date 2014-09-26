@@ -36,6 +36,7 @@ def janitor():
             time.sleep(0.2)
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                    sock.settimeout(0.2)
                     address = (producer, 13371)
                     sock.connect(address)
                     sock.send(b"OPTIONS * RTSP/1.0\r\n")
@@ -53,6 +54,7 @@ def main():
 
     try:
         address = ('0.0.0.0', 13370)
+        socketserver.TCPServer.allow_reuse_address = True 
         server = socketserver.TCPServer(address, ServerHandler)
         print('Running...')
         server.serve_forever()
