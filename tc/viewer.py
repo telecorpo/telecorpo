@@ -97,9 +97,6 @@ class Pipeline:
 
     def select(self, url):
         index = self.url_to_index[url]
-        print(url)
-        print(index)
-        print()
         Gst.debug_bin_to_dot_file(self.pipe, Gst.DebugGraphDetails.CAPS_DETAILS, "pipe")
         selected_pad = self.selector.get_static_pad("sink_{}".format(index))
         self.selector.set_property('active-pad', selected_pad)
