@@ -36,7 +36,6 @@ def janitor():
             time.sleep(0.2)
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                    sock.settimeout(0.2)
                     address = (producer, 13371)
                     sock.connect(address)
                     sock.send(b"OPTIONS * RTSP/1.0\r\n")
