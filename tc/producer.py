@@ -70,6 +70,8 @@ class MainWindow(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.available_sources = probe_sources()
+        
+        self._hack = None
 
         self.master.title('Telecorpo Producer')
         self.draw_source_list()
@@ -125,7 +127,15 @@ class MainWindow(tk.Frame):
                                        args=(selected_sources,),
                                        daemon=True)
         rtsp_thread.start()
-
+        
+        if self._hack:
+            self._hack.set_state(Gst.State.NULL)
+        
+        # ensures the server keep alive after all clients have disconnected
+        self._hack = Gst.parse_launch(" ".join("""
+            rtspsrc location=rtsp://127.0.0.1:13371/%s ! fakesink
+        """ % source for source in selected_sources))
+        self._hack.set_state(Gst.State.PLAYING)
         
         # attemp to registrate this producer 
         try:
