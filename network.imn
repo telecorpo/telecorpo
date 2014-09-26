@@ -1,0 +1,103 @@
+node n1 {
+    type router
+    model PC
+    network-config {
+	hostname br
+	!
+	interface eth0
+	 ip address 10.0.0.1/24
+	!
+    }
+    canvas c1
+    iconcoords {131.0 381.0}
+    labelcoords {131.0 413.0}
+    interface-peer {eth0 n4}
+}
+
+node n2 {
+    type router
+    model PC
+    network-config {
+	hostname pt
+	!
+	interface eth0
+	 ip address 10.0.0.3/24
+	!
+    }
+    canvas c1
+    iconcoords {461.0 343.0}
+    labelcoords {461.0 375.0}
+    interface-peer {eth0 n4}
+}
+
+node n3 {
+    type router
+    model PC
+    network-config {
+	hostname cl
+	!
+	interface eth0
+	 ip address 10.0.0.2/24
+	!
+    }
+    canvas c1
+    iconcoords {314.0 386.0}
+    labelcoords {314.0 418.0}
+    interface-peer {eth0 n4}
+}
+
+node n4 {
+    type hub
+    network-config {
+	hostname n4
+	!
+    }
+    canvas c1
+    iconcoords {296.0 197.0}
+    labelcoords {296.0 221.0}
+    interface-peer {e0 n1}
+    interface-peer {e1 n3}
+    interface-peer {e2 n2}
+}
+
+link l1 {
+    ber 0.1
+    delay 110
+    nodes {n1 n4}
+    bandwidth 100000000
+}
+
+link l2 {
+    ber 4
+    delay 110
+    nodes {n4 n3}
+    bandwidth 100000000
+}
+
+link l3 {
+    ber 1
+    delay 110
+    nodes {n4 n2}
+    bandwidth 100000000
+}
+
+canvas c1 {
+    name {Canvas1}
+}
+
+option global {
+    interface_names no
+    ip_addresses yes
+    ipv6_addresses yes
+    node_labels yes
+    link_labels yes
+    show_api no
+    background_images no
+    annotations yes
+    grid yes
+    traffic_start 0
+}
+
+option session {
+}
+
