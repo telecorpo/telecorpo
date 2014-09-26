@@ -31,11 +31,13 @@ class CustomInstallCommand(install):
 
 setup(
     name = 'telecorpo',
-    version = '0.90',
+    version = '0.91',
     
     cmdclass = {
         'install': CustomInstallCommand,
     },
     packages = find_packages(),
-    scripts = ['scripts/telecorpo'],
+    entry_points = {
+        'console_scripts': ['telecorpo = tc:main'],
+    }
 )
