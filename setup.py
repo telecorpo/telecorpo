@@ -31,7 +31,7 @@ class CustomInstallCommand(install):
 
 setup(
     name = 'telecorpo',
-    version = '0.90',
+    version = '0.91',
     
     cmdclass = {
         'install': CustomInstallCommand,
