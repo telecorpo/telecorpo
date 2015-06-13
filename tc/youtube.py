@@ -1,4 +1,10 @@
 
+
+#
+# Baseado em:
+# http://sourceforge.net/p/snowmix/wiki/Snowmix%20and%20CDNs/
+#
+
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import GObject, Gst
