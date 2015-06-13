@@ -43,7 +43,8 @@ def run_rtsp_server(sources):
     for mount_point, pipeline in sources.items():
         launch = ("( {} ! queue ! videoconvert ! videoscale ! videorate"
                   " ! video/x-raw,format=I420 ! queue"
-                  " ! x264enc speed-preset=ultrafast tune=zerolatency"
+                  # i don't know if theese parameters go well together, try each one separately
+                  " ! x264enc speed-preset=ultrafast tune=zerolatency intra-refresh=true key-int-max=0"
                   " ! queue ! rtph264pay pt=96 name=pay0 )"
                   "".format(pipeline))
         factory = GstRtspServer.RTSPMediaFactory()
