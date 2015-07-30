@@ -1,3 +1,5 @@
+# Telecorpo
+
 Este é produto de uma pesquisa em andamento iniciada pouco após o [EVD58](http://www.mapad2.ufba.br/site/destaques/danca-telematica-embodied-in-varios-darmstadt58) no [Grupo de Pesquisa Poéticas Tecnológicas](http://www.poeticatecnologica.ufba.br/site/), desenvolvido por [Pedro lacerda](http://lattes.cnpq.br/8338596525330907) sobre orientação da professora [Ivani Santana](http://ivanisantana.net/).
 
 
