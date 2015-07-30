@@ -5,10 +5,10 @@ bold="$(tput bold)"
 reset="$(tput sgr0)"
 
 echo ${green}[1/4] ${reset}Updating the package index
-apt-get update -qq
+apt-get update -q
 
 echo ${green}[2/4] ${reset}Installing dependencies
-apt-get install -qq python3 python3-tk python3-setuptools python3-gi \
+apt-get install -q python3 python3-tk python3-setuptools python3-gi \
                     gstreamer1.0-{tools,libav,x,plugins-{good,bad,ugly}} \
                     gir1.2-{gstreamer-1.0,gtk-3.0}
 
