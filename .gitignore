@@ -1,5 +1,6 @@
 venv/
 dist/
+build/
 __pycache__/
 _trial_temp/
 .idea/
@@ -8,3 +9,4 @@ _trial_temp/
 *.png
 *.dot
 *.deb
+*.so
