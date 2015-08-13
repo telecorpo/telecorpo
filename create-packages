@@ -74,7 +74,7 @@ TC_VERSION=$(
 
     #  --python-package-name-prefix python3
     #  --python-pip /usr/bin/pip3 --python-bin /usr/bin/python3
-    fpm -s dir -t deb -n telecorpo -v $TC_VERSION -C fake_root \
+    fpm -s dir -t deb -n telecorpo -v $TC_VERSION -a all -C fake_root \
       -d libgstrtspserver-1.0 \
       -d gstreamer1.0-plugins-ugly \
       -d python3 \
@@ -82,6 +82,6 @@ TC_VERSION=$(
 
 print_step          "[3/2]" "Listo"
 print_step ${yellow}"  /2 " "Done"
-for project in $(find build -name '*.deb'); do
-    cp $project/*.deb build
+for deb in $(find build/ -name '*.deb'); do
+    mv $deb build/
 done
