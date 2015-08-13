@@ -8,7 +8,7 @@ Este é produto de uma pesquisa em andamento iniciada pouco após o [EVD58](http
 
 # Introdução
 
-TeleCorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [UltraGrid](http://www.ultragrid.cz/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Scenic2](http://code.sat.qc.ca/redmine/projects/scenic2/wiki), etc.
+TeleCorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte de vídeo, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [UltraGrid](http://www.ultragrid.cz/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), etc.
 
 Exceto para o Youtube, Telecorpo é incapaz de transmitir áudio, para isto experimente  [JackTrip](https://ccrma.stanford.edu/groups/soundwire/software/jacktrip/), [NetJack](http://netjack.sourceforge.net/), etc.
 
@@ -22,7 +22,7 @@ jitter | pequeno atraso na transmissão | um cache/buffer aguarda por pacotes at
 
 A potência dos computadores também impacta no atraso/delay, custa um tempo capturar, codificar, decodificar e exibir. Computadores mais potentes podem realizar estas tarefas mais rapidamente. Comprimir os quadros/frames (**cod**ificar) custa mais processamento do que descomprimí-los (**dec**odificar), e por isso exibir é mais "leve" do que capturar.
 
-Foi utilizado no espetáculo Personare de dança telemática, apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em {27,28} de setembro de 2014. {[Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica),[aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/)}. A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
+Foi utilizado no espetáculo Personare de dança telemática, apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em {27,28} de setembro de 2014. [Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica), [aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/). A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/1.png)
 
@@ -36,10 +36,10 @@ Você precisará de
 * câmera USB/Webcam ou Firewire® DV
 * firewall desabilitado entre os computadores participantes
 
-Pacotes `.deb` são fornecidos para facilitar a instalação. Tanto do TeleCorpo, quanto da biblioteca GstRtspServer, requerida pelo TeleCorpo. Caso queira construí-los "na mão", execute o __script__ `./create-packages`, mas seria grato modificá-lo para gerar também pacotes `.rpm`.
+Pacotes `.deb` são fornecidos para facilitar a instalação. Tanto do TeleCorpo, quanto da biblioteca GstRtspServer, requerida pelo TeleCorpo. Caso queira construí-los "na mão", execute o _script_ `./create-packages`, mas seria grato modificá-lo para gerar também pacotes `.rpm`.
 
-**`telecorpo_0.92_amd64.deb`** | aaaa
------------------------------- | ----
+**`telecorpo_0.92_amd64.deb`** | **`libgstrtspserver-1.0_1.4.4_amd64.deb`**
+-------------------------- | --------------------------------------
 
     $ wget -q -O - https://raw.githubusercontent.com/pslacerda/telecorpo/master/install.sh | sudo bash
 
@@ -53,7 +53,7 @@ Telecorpo é composto por alguns módulos diferentes:
 módulo | descrição
 --------- | -----------
 producer | captura uma ou mais câmeras e as disponibiliza como fluxos RTSP
-viewer | mesa de corte que alterna entre os fluxos disponibilizados
+viewer | mesa de corte de vídeo que alterna entre os fluxos disponibilizados
 server | indexa os fluxos ativos
 
 Estes módulos precisam ser inicializados numa ordem específica:
