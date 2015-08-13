@@ -4,13 +4,13 @@
 
 # Telecorpo
 
-Este é produto de uma pesquisa em andamento iniciada pouco após o [EVD58](http://embodied.mx/) no [Grupo de Pesquisa Poéticas Tecnológicas](http://www.poeticatecnologica.ufba.br/site/), desenvolvido por [Pedro lacerda](http://lattes.cnpq.br/8338596525330907) sob orientação da professora [Ivani Santana](http://ivanisantana.net/).
+Este é produto de uma pesquisa em andamento iniciada pouco após o [EVD58](http://embodied.mx/) no [Grupo de Pesquisa Poéticas Tecnológicas](http://www.poeticatecnologica.ufba.br/site/), desenvolvido por [Pedro Lacerda](http://lattes.cnpq.br/8338596525330907) sob orientação da professora [Ivani Santana](http://ivanisantana.net/).
 
 # Introdução
 
-Telecorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Scenic2](http://code.sat.qc.ca/redmine/projects/scenic2/wiki), etc.
+TeleCorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [UltraGrid](http://www.ultragrid.cz/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Scenic2](http://code.sat.qc.ca/redmine/projects/scenic2/wiki), etc.
 
-Exceto para o Youtube, Telecorpo é incapaz de transmitir áudio, para isto tente  [JackTrip](https://ccrma.stanford.edu/groups/soundwire/software/jacktrip/), [NetJack](http://netjack.sourceforge.net/), etc.
+Exceto para o Youtube, Telecorpo é incapaz de transmitir áudio, para isto experimente  [JackTrip](https://ccrma.stanford.edu/groups/soundwire/software/jacktrip/), [NetJack](http://netjack.sourceforge.net/), etc.
 
 Algumas características da rede impactam na qualidade da transmissão,  observe-as:
 
@@ -20,9 +20,9 @@ delay | atraso na transmissão | para levar um pacote de dados de uma cidade at�
 perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar, tente aumentar a frequência de key-frames enviados para compensar as perdas facilitando a reconstrução da imagem no decodificador, vide `x264 --keyint` ou `x264enc key-int-max` |
 jitter | pequeno atraso na transmissão | um cache/buffer aguarda por pacotes atrasados para evitar a reconstrução errônea da imagem, mas descarta os muito atrasados |
 
-A potência dos computadores também impacta no atraso porque exige um trabalho de tempo constante de codificação das imagens. Imagine que, se para cada segundo capturado pela câmera demorasse o dobro para codificar/comprimir antes de enviar os dados pela rede, demoraria 20 segundos para codificar 10 segundos de imagem. Já a decodificação e exibição são trabalhos menos custosos, impactando menos o delay.
+A potência dos computadores também impacta no atraso/delay, custa um tempo capturar, codificar, decodificar e exibir. Computadores mais potentes podem realizar estas tarefas mais rapidamente. Comprimir os quadros/frames (**cod**ificar) custa mais processamento do que descomprimí-los (**dec**odificar), e por isso exibir é mais "leve" do que capturar.
 
-Em 27 e 28 de Setembro de 2014, foi utilizado no espetáculo de dança telemática Personare, apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal. [Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh) [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica) [aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/). A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
+Foi utilizado no espetáculo Personare de dança telemática, apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em {27,28} de setembro de 2014. {[Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica),[aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/)}. A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/1.png)
 
@@ -32,11 +32,14 @@ Em 27 e 28 de Setembro de 2014, foi utilizado no espetáculo de dança telemáti
 Você precisará de
 
 * internet acadêmica ou rede local
-* sistema operacional baseado em Debian (testado no Mint 17 e Ubuntu 14.04)
+* sistema operacional baseado em Debian (testado no Mint 17, Ubuntu 14.04, Debian 8.1)
 * câmera USB/Webcam ou Firewire® DV
 * firewall desabilitado entre os computadores participantes
 
-Para instalar execute a seguinte linha num terminal de comandos:
+Pacotes `.deb` são fornecidos para facilitar a instalação. Tanto do TeleCorpo, quanto da biblioteca GstRtspServer, requerida pelo TeleCorpo. Caso queira construí-los "na mão", execute o __script__ `./create-packages`, mas seria grato modificá-lo para gerar também pacotes `.rpm`.
+
+**`telecorpo_0.92_amd64.deb`** | aaaa
+------------------------------ | ----
 
     $ wget -q -O - https://raw.githubusercontent.com/pslacerda/telecorpo/master/install.sh | sudo bash
 
