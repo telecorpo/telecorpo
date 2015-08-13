@@ -22,7 +22,7 @@ jitter | pequeno atraso na transmissão | um cache/buffer aguarda por pacotes at
 
 A potência dos computadores também impacta no atraso/delay, custa um tempo capturar, codificar, decodificar e exibir. Computadores mais potentes podem realizar estas tarefas mais rapidamente. Comprimir os quadros/frames (**cod**ificar) custa mais processamento do que descomprimí-los (**dec**odificar), e por isso exibir é mais "leve" do que capturar.
 
-Foi utilizado no espetáculo Personare de dança telemática, apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em {27,28} de setembro de 2014. [Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica), [aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/). A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
+Foi utilizado no Personare, espetáculo de dança telemática apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em {27,28} de setembro de 2014. [Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica), [aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/). A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/1.png)
 
@@ -32,18 +32,21 @@ Foi utilizado no espetáculo Personare de dança telemática, apresentado em sim
 Você precisará de
 
 * internet acadêmica ou rede local
-* sistema operacional baseado em Debian (testado no Mint 17, Ubuntu 14.04, Debian 8.1)
+* sistema operacional baseado em Linux (testado no Mint 17, Ubuntu 14.04, Debian 8.1)
 * câmera USB/Webcam ou Firewire® DV
 * firewall desabilitado entre os computadores participantes
 
-Pacotes `.deb` são fornecidos para facilitar a instalação. Tanto do TeleCorpo, quanto da biblioteca GstRtspServer, requerida pelo TeleCorpo. Caso queira construí-los "na mão", execute o _script_ `./create-packages`, mas seria grato modificá-lo para gerar também pacotes `.rpm`.
-
-**`telecorpo_0.92_amd64.deb`** | **`libgstrtspserver-1.0_1.4.4_amd64.deb`**
+[**`telecorpo_0.92_all.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/telecorpo_0.92_all.deb) | [**`libgstrtspserver-1.0_1.4.4_amd64.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/libgstrtspserver-1.0_1.4.4_amd64.deb)
 -------------------------- | --------------------------------------
 
-    $ wget -q -O - https://raw.githubusercontent.com/pslacerda/telecorpo/master/install.sh | sudo bash
+Pacotes `.deb` são fornecidos para facilitar a instalação. Tanto do TeleCorpo, quanto da biblioteca [GstRtspServer](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), requerida pelo TeleCorpo. Caso queira construí-los "na mão", execute o _script_ `./create-packages`, mas seria grato modificá-lo para gerar também pacotes `.rpm`.
 
-O programa estará disponível no Menu Iniciar, ou pelo comando `telecorpo`.
+Para instalá-los, entre com:
+
+    $ dpkg -i libgstrtspserver-1.0_1.4.4_amd64.deb
+    $ dpkg -i telecorpo_0.92_all.deb
+
+, e o programa estará disponível no Menu Iniciar, ou pelo comando `telecorpo`.
 
 
 # Guia rápido de uso
