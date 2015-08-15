@@ -10,7 +10,7 @@ Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.m
 
 # Introdução
 
-Telecorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte de vídeo, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [UltraGrid](http://www.ultragrid.cz/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), etc.
+Telecorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte de vídeo, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Snowmix](http://snowmix.sourceforge.net/), [UltraGrid](http://www.ultragrid.cz/), etc.
 
 Exceto para o Youtube, Telecorpo é incapaz de transmitir áudio, para isto experimente  [JackTrip](https://ccrma.stanford.edu/groups/soundwire/software/jacktrip/), [NetJack](http://netjack.sourceforge.net/), etc.
 
@@ -60,6 +60,12 @@ módulo | descrição
 `tc.server`   | gerencia os fluxos ativos
 `tc.youtube`  | transmite video para o grande público
 
+O código do programa poderia ser dito não-"macarrônica" de acordo com o [Progamador Pragmático](http://www.saraiva.com.br/o-programador-pragmatico-3674493.html), pois mudanças num módulo não interfeririam em outro já que não há interdependências explícitas. Baixíssimo acoplamento, portanto. Mas ocorrem dependências em tempo de execução, na dinâmica do sistema, exigindo uma ordem específica para inicialização dos componentes.
+
+O `server` cataloga os fluxos produzidos (ou capturados) pelos `producer`s, e cada `viewer` consulta o `server` para descobrir quais fluxos estão disponíveis. Periodicamente o `server` consulta cada URL de fluxo catalogada para descobrir se ainda está ativa, desregistrando-a caso não. Também periodicamente, cada `viewer` consulta o `server` inquerindo as URLs ainda ativas.
+
+para consumidos pelos `viewer`s, portanto e `producer` dependem do `server` em execução, portanto o servidor é o primeiro módulo à ser executado num espetáculo;
+* `viewer` depende do `producer`, de modo que não podemos exibir imagens sem as ter capturado primeiro.
 
 # Guia rápido de uso
 
