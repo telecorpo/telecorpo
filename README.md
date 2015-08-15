@@ -4,7 +4,9 @@
 
 # TeleCorpo
 
-Este é produto de uma pesquisa em andamento iniciada pouco após o [EVD58](http://embodied.mx/) no [Grupo de Pesquisa Poéticas Tecnológicas](http://www.poeticatecnologica.ufba.br/site/), desenvolvido por [Pedro Lacerda](http://lattes.cnpq.br/8338596525330907) sob orientação da professora [Ivani Santana](http://ivanisantana.net/).
+Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.mx/) no [Grupo de Pesquisa Poéticas Tecnológicas](http://www.poeticatecnologica.ufba.br/site/). Foi desenvolvido por [Pedro Lacerda](http://lattes.cnpq.br/8338596525330907) sob orientação da professora [Ivani Santana](http://ivanisantana.net/) para o Personare, espetáculo de dança telemática apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em 27 e 28 de setembro de 2014. [Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica), [aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/).
+
+
 
 # Introdução
 
@@ -17,15 +19,14 @@ Algumas características da rede impactam na qualidade da transmissão,  observe
 característica da rede | impacto na transmissão | |
 ---------------------- | ---------- |----------- |
 delay | atraso na transmissão | para levar um pacote de dados de uma cidade até a outra, ele precisa percorrer uma distância e atravessar equipamentos de rede |
-perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar, tente aumentar a frequência de key-frames enviados para compensar as perdas facilitando a reconstrução da imagem no decodificador, vide `x264 --keyint` ou `x264enc key-int-max` |
+perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar, tente aumentar a frequência de key-frames enviados para compensar as perdas facilitando a reconstrução da imagem no decodificador, vide [`x264 --keyint`](http://manpages.ubuntu.com/manpages/intrepid/man1/x264.1.html) ou [`x264enc key-int-max`](http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-ugly-plugins/html/gst-plugins-ugly-plugins-x264enc.html) |
 jitter | pequeno atraso na transmissão | um cache/buffer aguarda por pacotes atrasados para evitar a reconstrução errônea da imagem, mas descarta os muito atrasados |
 
 A potência dos computadores também impacta no atraso/delay, custa um tempo capturar, codificar, decodificar e exibir. Computadores mais potentes podem realizar estas tarefas mais rapidamente. Comprimir os quadros/frames (**cod**ificar) custa mais processamento do que descomprimí-los (**dec**odificar), e por isso exibir é mais "leve" do que capturar.
 
-Foi utilizado no Personare, espetáculo de dança telemática apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em {27,28} de setembro de 2014. [Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica), [aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/). A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
+ A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/1.png)
-
 
 # Requisitos e Instalação
 
@@ -48,6 +49,17 @@ Para instalá-los, entre com:
 
 , que então o programa estará disponível no Menu Iniciar e pelo comando `telecorpo`.
 
+# Arquitetura
+
+O desenho arquitetural da versão atual (v0.92) do Telecorpo consiste em três módulos essenciais para o funcionamento do programa, e um quarto utilizado na transmissão para o grande público, fora dos palcos. O protocolo subjacente escolhido foi o [RTSP](https://tools.ietf.org/html/rfc2326), semelhante ao HTTP, mas que transmite conteúdo midiático ao invés de hipertextos. A vantagem deste protocolo, entretanto, é a disponibilização dos conteúdos (fluxos) por uma URL, tornando 
+
+módulo | descrição
+------ | -----------
+`tc.producer` | captura uma ou mais câmeras e as disponibiliza como fluxos RTSP
+`tc.viewer`   | mesa de corte de vídeo que alterna entre os fluxos disponibilizados
+`tc.server`   | gerencia os fluxos ativos
+`tc.youtube`  | transmite video para o grande público
+
 
 # Guia rápido de uso
 
@@ -57,7 +69,7 @@ módulo | descrição
 --------- | -----------
 producer | captura uma ou mais câmeras e as disponibiliza como fluxos RTSP
 viewer | mesa de corte de vídeo que alterna entre os fluxos disponibilizados
-server | indexa os fluxos ativos
+server | gerencia os fluxos ativos
 
 Estes módulos precisam ser inicializados numa ordem específica:
 
