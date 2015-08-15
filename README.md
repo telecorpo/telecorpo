@@ -51,7 +51,7 @@ Para instalá-los, entre com:
 
 # Arquitetura
 
-O desenho arquitetural da versão atual (v0.92) do Telecorpo consiste em três módulos essenciais para o funcionamento do programa, e um quarto, utilizado na transmissão para o grande público fora dos palcos. O protocolo subjacente escolhido foi o [RTSP](https://tools.ietf.org/html/rfc2326), semelhante ao HTTP, mas que transmite conteúdo midiático ao invés de hipertexto. Entretanto a vantagem da escolha foi o fato do RTSP disponibilizar os conteúdos (fluxos) por uma URL, tornando a ferramenta mais familiar para usuários não-técnicos.
+O desenho arquitetural da versão atual (v0.92) do Telecorpo consiste em três módulos essenciais para o funcionamento do programa, e um quarto, utilizado na transmissão para o grande público fora dos palcos. O protocolo subjacente escolhido foi o [RTSP](https://tools.ietf.org/html/rfc2326), semelhante ao HTTP, mas que transmite conteúdo audiovisual ao invés de hipertexto. Entretanto a vantagem da escolha foi o fato do RTSP disponibilizar os conteúdos (fluxos) por uma URL, tornando a ferramenta mais familiar para usuários não-técnicos.
 
 módulo | descrição
 ------ | -----------
@@ -60,12 +60,15 @@ módulo | descrição
 `tc.server`   | gerencia os fluxos ativos
 `tc.youtube`  | transmite video para o grande público
 
-O código do programa poderia ser dito não-"macarrônica" de acordo com o [Progamador Pragmático](http://www.saraiva.com.br/o-programador-pragmatico-3674493.html), pois mudanças num módulo não interfeririam em outro já que não há interdependências explícitas. Baixíssimo acoplamento, portanto. Mas ocorrem dependências em tempo de execução, na dinâmica do sistema, exigindo uma ordem específica para inicialização dos componentes.
+O código do programa poderia ser dito não-"macarrônica" de acordo com o [Progamador Pragmático](http://www.saraiva.com.br/o-programador-pragmatico-3674493.html), pois mudanças num módulo não interfeririam em outro já que não há interdependências explícitas o código dos módulos. Baixíssimo acoplamento, portanto. Mas ocorrem dependências em tempo de execução, na dinâmica do sistema, exigindo uma ordem específica para inicialização dos componentes.
 
-O `server` cataloga os fluxos produzidos (ou capturados) pelos `producer`s, e cada `viewer` consulta o `server` para descobrir quais fluxos estão disponíveis. Periodicamente o `server` consulta cada URL de fluxo catalogada para descobrir se ainda está ativa, desregistrando-a caso não. Também periodicamente, cada `viewer` consulta o `server` inquerindo as URLs ainda ativas.
+Com o `server` em execução, o `producer` registra nele os fluxos produzidos (câmeras capturadas). Então o `server` passa a consultar periodicamente cada URL de fluxo para verificar se ainda está ativa, e desregistrá-la caso a consulta falhe. O diagrama abaixo, mesmo o `producer` registrando três câmeras diferentes, mostra
 
-para consumidos pelos `viewer`s, portanto e `producer` dependem do `server` em execução, portanto o servidor é o primeiro módulo à ser executado num espetáculo;
-* `viewer` depende do `producer`, de modo que não podemos exibir imagens sem as ter capturado primeiro.
+![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/seq1.png)
+
+
+cataloga os fluxos produzidos (capturados) pelos `producer`s, e cada `viewer` consulta o `server` para descobrir quais fluxos estão disponíveis. Periodicamente o `server` consulta cada URL de fluxo catalogada para descobrir se ainda está ativa, desregistrando-a caso não. Também periodicamente, cada `viewer` consulta o `server` inquerindo as URLs ainda ativas.
+
 
 # Guia rápido de uso
 
