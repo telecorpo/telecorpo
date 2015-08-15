@@ -60,9 +60,11 @@ módulo | descrição
 `tc.server`   | gerencia os fluxos ativos
 `tc.youtube`  | transmite video para o grande público
 
-O programa poderia ser dito não-"macarrônico" de acordo com o [Progamador Pragmático](http://www.saraiva.com.br/o-programador-pragmatico-3674493.html), pois mudanças num módulo não interfeririam em outro, já que não há dependências explícitas entre eles. Baixíssimo acoplamento, portanto. Mas há dependências em tempo de execução, que ocorrem na dinâmica do sistema, exigindo uma ordem específica para inicialização dos componentes.
+O programa poderia ser dito não-__macarrônico__ de acordo com o [Progamador Pragmático](http://www.saraiva.com.br/o-programador-pragmatico-3674493.html), pois mudanças num módulo não interfeririam em outro, já que não há dependências explícitas entre eles. Baixíssimo acoplamento, portanto. Mas há dependências em tempo de execução, que ocorrem na dinâmica do sistema, exigindo uma ordem específica para inicialização dos componentes.
 
-Com o `server` em execução, o `producer` registra nele os fluxos produzidos (câmeras capturadas). Então o `server` passa a consultar periodicamente cada URL de fluxo para verificar se ainda está ativa, e desregistrá-la caso a consulta falhe. O diagrama abaixo, mesmo com `producer` registrando três câmeras diferentes, mostra a sequência temporal de troca de mensagens relativas à câmera nomeada `fw0` até a consulta falhar, quando `fw0` será desregistrada: 
+Com o `server` em execução, o `producer` registra nele os fluxos produzidos (câmeras capturadas). Então o `server` passa a consultar periodicamente cada URL de fluxo para verificar se ainda está ativa, e desregistrá-la caso a consulta falhe. Já o `viewer` é mais simples, apenas inquere periodicamente o `server` pelas URLs de fluxos ainda ativos, isto é, não encerradas.
+
+O diagrama abaixo-esquerda mostra um `producer` registrando três câmeras diferentes, e sequência temporal de troca de mensagens relativas à câmera nomeada `fw0` até a consulta falhar, quando então `fw0` será desregistrada do `server`, significando que ou o `producer` foi encerrado ou falhou.  No diagrama abaixo-direita vê-se um `viewer` inquerindo pelas URLs de um `server` que possúi inicialmente um `producer` registrado com 2 câmeras ativas e então um outro `producer` é adicionado com uma terceira câmera. Note que os dois diagramas se referem à situações diferentes.
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/seq1.png)
 
