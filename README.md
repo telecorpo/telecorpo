@@ -62,7 +62,7 @@ módulo | descrição
 
 O código do programa poderia ser dito não-"macarrônica" de acordo com o [Progamador Pragmático](http://www.saraiva.com.br/o-programador-pragmatico-3674493.html), pois mudanças num módulo não interfeririam em outro já que não há interdependências explícitas o código dos módulos. Baixíssimo acoplamento, portanto. Mas ocorrem dependências em tempo de execução, na dinâmica do sistema, exigindo uma ordem específica para inicialização dos componentes.
 
-Com o `server` em execução, o `producer` registra nele os fluxos produzidos (câmeras capturadas). Então o `server` passa a consultar periodicamente cada URL de fluxo para verificar se ainda está ativa, e desregistrá-la caso a consulta falhe. O diagrama abaixo, mesmo o `producer` registrando três câmeras diferentes, mostra
+Com o `server` em execução, o `producer` registra nele os fluxos produzidos (câmeras capturadas). Então o `server` passa a consultar periodicamente cada URL de fluxo para verificar se ainda está ativa, e desregistrá-la caso a consulta falhe. O diagrama abaixo, mesmo com `producer` registrando três câmeras diferentes, mostra a sequência temporal de troca de mensagens relativas à câmera nomeada `fw0` até a consulta falhar, quando `fw0` será desregistrada: 
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/seq1.png)
 
