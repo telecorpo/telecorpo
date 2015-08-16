@@ -6,6 +6,13 @@
 
 Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.mx/) no [Grupo de Pesquisa Poéticas Tecnológicas](http://www.poeticatecnologica.ufba.br/site/). Foi desenvolvido por [Pedro Lacerda](http://lattes.cnpq.br/8338596525330907), sob orientação da professora [Ivani Santana](http://ivanisantana.net/), para o _Personare_, espetáculo de dança telemática apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em 27 e 28 de setembro de 2014. [Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica), [aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/).
 
+## Tabela de Conteúdos
+* [Introdução](#introdução)
+* [Requisitos e instalação](#requisitos-e-instalação)
+* [Arquitetura](#arquitetura)
+* [Guia rápido de uso](#guia-rápido-de-uso)
+* [Transmissão para o Youtube](#transmissão-pelo-youtube)
+* [Recepção de vídeo por aplicativos externos](#recepção-de-vídeo-por-aplicativos-externos)
 
 
 # Introdução
