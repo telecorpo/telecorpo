@@ -34,7 +34,7 @@ GST_VERSION=$(gst-inspect-1.0 --version | awk '{ if (NF==2) print $2 }')
 CONFIGURE_FLAGS="--prefix=/usr --disable-debug"
 
 (cd build
-    git clone --single-branch --branch $GST_VERSION $GIT_URL)
+    git clone --depth 1 --single-branch --branch $GST_VERSION $GIT_URL)
 
 (cd build/gst-rtsp-server
     sh autogen.sh -- $CONFIGURE_FLAGS
@@ -62,7 +62,7 @@ TC_VERSION=$(
 # TODO: add package type 'python3' in FPM as in `fpm -s python3`
 # TODO: subclass FPM::Package::Python and override defaults?
 (cd build
-    git clone --single-branch --branch $TC_VERSION $GIT_URL)
+    git clone --depth 1 --single-branch --branch $TC_VERSION $GIT_URL)
 
 (cd build/telecorpo
     mkdir -p fake_root
