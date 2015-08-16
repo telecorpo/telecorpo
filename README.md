@@ -80,13 +80,16 @@ Já o módulo `youtube`, utilizado para transmitir vídeos ao vivo para o [Youtu
 
 # Guia rápido de uso
 
-Apenas uma instância do `server` é necessária para o funcionamento do sistema. `producer`s e `viewer`s podem ser inicializados tantos quantos forem necessários. Se você tem duas câmeras em dois países diferentes, será necessário inicializar dois `producer`s, um em cada país. Similarmente, se você tem três projetores em três países diferentes, será necessário inicializar três `viewers`, um em cada país.
+Apenas uma instância do `server` é necessária para o funcionamento do sistema. `producers` e `viewers` podem ser inicializados tantos quantos forem necessários. Se você tem duas câmeras em dois países diferentes, será necessário inicializar dois `producers`, um em cada país. Similarmente, se você tem três projetores em três países diferentes, será necessário inicializar três `viewers`, um em cada país.
 
-Além de ser necessário iniciar os módulos em uma ordem específica devido à própria natureza dos sitemas distribuídos, existem defeitos de implementação que reafirmam a necessidade de cuidados na inicialização do sistema. O módulo `server` é o primeiro à ser executado, já que `producer`s e `viewer`s registram-se nele. Então, teoricamente, tantos quantos necessários, `producer`s e `viewer`s poderiam ser inicializados em qualquer ordem, mas devido à discrepâncias entre a arquitetura e implementação, poderá ser necessário inicializar primeiro os `producer`s, para então os `viewers`.
+Além de ser necessário iniciar os módulos em uma ordem específica devido à própria natureza dos sitemas distribuídos, existem defeitos de implementação que reafirmam a necessidade de cuidados na inicialização do sistema. O módulo `server` é sempre o primeiro à ser executado, já que `producers` e `viewers` registram-se nele. Então, teoricamente, tantos quantos necessários, `producers` e `viewers` poderiam ser inicializados em qualquer ordem, mas devido à discrepâncias entre a arquitetura e implementação, poderá ser necessário inicializar primeiro os `producers`, para então os `viewers`.
 
-1. Em uma das máquinas execute o comando `telecorpo server`. Apenas uma instância do servidor é necessária.![server.png](https://bitbucket.org/repo/RnKegx/images/1808291682-server.png)
-2. Nas máquinas com câmeras conectadas vá para *Menu iniciar > Telecorpo > Producer*, escolha uma ou mais câmeras disponíveis (dica: use Ctrl+Mouse), escreva o endereço de IP do servidor, aperte em *Registrate*.![producer.png](https://bitbucket.org/repo/RnKegx/images/2233534168-producer.png)
-3. Nas máquinas com projetores conectados vá para *Menu iniciar > Telecorpo > Viewer*, escreva o endereço de IP do servidor, aperte em *Registrate*. Note que cada instância deste programa consome uma quantidade de banda. ![viewer.png](https://bitbucket.org/repo/RnKegx/images/3140953753-viewer.png)
+Veja abaixo a lista de etapas necessárias para utilização do TeleCorpo.
+
+1. Em uma das máquinas execute o comando `telecorpo server`. Também anote endereço de IP desta máquina. necessária. ![server.png](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/server.png)
+2. Nas máquinas com câmeras conectadas vá para *Menu iniciar > Telecorpo > Producer*, escolha uma ou mais câmeras disponíveis (use Ctrl+Mouse), escreva o endereço de IP do servidor, aperte em *Registrate*. ![producer.png](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/producer.png)
+3. Nas máquinas com projetores conectados vá para *Menu iniciar > Telecorpo > Viewer*, escreva o endereço de IP do servidor, aperte em *Registrate*. Note que cada instância deste programa consome uma quantidade de banda. ![viewer1.png](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/viewer1.png)![viewer2.png](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/viewer2.png)
+
 4. **Atenção:** Sempre abra todos os *producers*, para então abrir todos os *viewers*. Em caso de falhas, feche todos os componentes (incluindo o *server*)e repita o processo.
 
 # Transmissão pelo Youtube
