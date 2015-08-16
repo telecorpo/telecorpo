@@ -90,7 +90,7 @@ Veja abaixo a lista de etapas necessárias para utilização do TeleCorpo.
 2. Nas máquinas com câmeras conectadas vá para *Menu iniciar > Telecorpo > Producer*, escolha uma ou mais câmeras disponíveis (use Ctrl+Mouse), escreva o endereço de IP do servidor, aperte em *Registrate*. ![producer.png](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/producer.png)
 3. Nas máquinas com projetores conectados vá para *Menu iniciar > Telecorpo > Viewer*, escreva o endereço de IP do servidor, aperte em *Registrate*. Note que cada instância deste programa consome uma quantidade de banda. ![viewer1.png](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/viewer1.png)![viewer2.png](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/viewer2.png)
 
-4. **Atenção:** Sempre abra todos os *producers*, para então abrir todos os *viewers*. Em caso de falhas, feche todos os componentes (incluindo o *server*)e repita o processo.
+4. **Atenção:** Sempre abra todos os `producers`, para então abrir todos os `viewers`. Em caso de falhas, feche todos os componentes (incluindo o `server`) e repita o processo.
 
 # Transmissão pelo Youtube
 
