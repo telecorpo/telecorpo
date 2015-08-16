@@ -76,8 +76,9 @@ TC_VERSION=$(
     fpm -s dir -t deb -n telecorpo -v $TC_VERSION -a all -C fake_root \
       -d libgstrtspserver-1.0 \
       -d gstreamer1.0-plugins-ugly \
+      -d gir1.2-gstreamer-1.0 \
       -d python3 \
-      -d gir1.2-gstreamer-1.0)
+      -d python3-tk)
 
 print_step          "[3/2]" "Listo"
 print_step ${yellow}"  /2 " "Done"
