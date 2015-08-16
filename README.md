@@ -9,7 +9,7 @@ Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.m
 ## Tabela de Conteúdos
 * [Introdução](#introdução)
 * [Requisitos e instalação](#requisitos-e-instalação)
-* [Arquitetura](#arquitetura-e-implementação)
+* [Arquitetura e Implementação](#arquitetura-e-implementação)
 * [Guia rápido de uso](#guia-rápido-de-uso)
 * [Transmissão para o Youtube](#transmissão-pelo-youtube)
 * [Recepção de vídeo por aplicativos externos](#recepção-de-vídeo-por-aplicativos-externos)
@@ -17,17 +17,15 @@ Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.m
 
 # Introdução
 
-Telecorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte de vídeo, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Snowmix](http://snowmix.sourceforge.net/), [UltraGrid](http://www.ultragrid.cz/), etc.
-
-Exceto para o Youtube, Telecorpo é incapaz de transmitir áudio, para isto experimente  [JackTrip](https://ccrma.stanford.edu/groups/soundwire/software/jacktrip/), [NetJack](http://netjack.sourceforge.net/), etc.
+Telecorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte de vídeo, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Snowmix](http://snowmix.sourceforge.net/), [UltraGrid](http://www.ultragrid.cz/), etc. Exceto para o Youtube, Telecorpo é incapaz de transmitir áudio, para isto experimente  [JackTrip](https://ccrma.stanford.edu/groups/soundwire/software/jacktrip/), [NetJack](http://netjack.sourceforge.net/), etc.
 
 Algumas características da rede impactam na qualidade da transmissão,  observe-as:
 
 característica da rede | impacto na transmissão | |
 ---------------------- | ---------- |----------- |
-delay | atraso na transmissão | para levar um pacote de dados de uma cidade até a outra, ele precisa percorrer uma distância e atravessar equipamentos de rede |
-perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar, tente aumentar a frequência de key-frames enviados para compensar as perdas facilitando a reconstrução da imagem no decodificador, vide [`x264 --keyint`](http://manpages.ubuntu.com/manpages/intrepid/man1/x264.1.html) ou [`x264enc key-int-max`](http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-ugly-plugins/html/gst-plugins-ugly-plugins-x264enc.html) |
-jitter | pequeno atraso na transmissão | um cache/buffer aguarda por pacotes atrasados para evitar a reconstrução errônea da imagem, mas descarta os muito atrasados |
+_delay_ | atraso na transmissão | para levar um pacote de dados de uma cidade até a outra, ele precisa percorrer uma distância e atravessar equipamentos de rede |
+perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar a transmissão, tente aumentar a frequência de key-frames enviados para compensar as perdas facilitando a reconstrução da imagem no decodificador, vide [`x264 --keyint`](http://manpages.ubuntu.com/manpages/intrepid/man1/x264.1.html) ou [`x264enc key-int-max`](http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-ugly-plugins/html/gst-plugins-ugly-plugins-x264enc.html) |
+_jitter_ | pequeno atraso na transmissão | devido à natureza das redes de computadores, pacotes podem chegar fora de ordem, uns mais atrasados do que outros, portanto _cache/buffer_ aguarda por pacotes atrasados para evitar a reconstrução errônea da imagem, mas descarta os muito atrasados, que são considerados perdidos |
 
 A potência dos computadores também impacta no atraso/delay, custa um tempo capturar, codificar, decodificar e exibir. Computadores mais potentes podem realizar estas tarefas mais rapidamente. Comprimir os quadros/frames (**cod**ificar) custa mais processamento do que descomprimí-los (**dec**odificar), e por isso exibir é mais "leve" do que capturar.
 
