@@ -58,7 +58,7 @@ Para instalá-los, entre com:
 
 O desenho arquitetural da versão atual (v0.92) do Telecorpo consiste em três módulos essenciais para o funcionamento do programa, e um quarto, utilizado na transmissão para o grande público fora dos palcos. O protocolo subjacente escolhido foi o [RTSP](https://tools.ietf.org/html/rfc2326), semelhante ao HTTP, mas que transmite conteúdo audiovisual ao invés de hipertexto. Entretanto a vantagem da escolha foi o fato do RTSP disponibilizar os conteúdos (fluxos) por uma URL, tornando a ferramenta mais familiar para usuários não-técnicos.
 
-Os _frameworks_ multimídia escolhidos foram o [GStreamer 1.0](http://gstreamer.freedesktop.org/) e o [gst-rtsp-server](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), ambos escritos na linguagem de programação C. Devido à morosidade em se desenvolver aplicativos nesta linguagem, Telecorpo foi desenvolvido em [Python 3](https://www.python.org/), utilizando tais _frameworks_ através de _bindings_ gerados automaticamente pelo _middleware_ [GObject Introspection](https://wiki.gnome.org/Projects/GObjectIntrospection)).
+Os _frameworks_ multimídia escolhidos foram o [GStreamer 1.0](http://gstreamer.freedesktop.org/) e o [gst-rtsp-server](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), ambos escritos na linguagem de programação C. Devido à morosidade em se desenvolver aplicativos nesta linguagem, Telecorpo foi desenvolvido em [Python 3](https://www.python.org/), utilizando tais _frameworks_ através de _bindings_ gerados automaticamente pelo _middleware_ [GObject Introspection](https://wiki.gnome.org/Projects/GObjectIntrospection).
 
 módulo | descrição
 ------ | -----------
