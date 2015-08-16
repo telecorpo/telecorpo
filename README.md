@@ -2,13 +2,22 @@
   <img alt="Marca do Poéticas Tecnológcias" src="https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/marca_poeticas_bg_branco_cor_pequeno.jpg"/>
 </p>
 
-# Telecorpo
+# TeleCorpo
 
-Este é produto de uma pesquisa em andamento iniciada pouco após o [EVD58](http://embodied.mx/) no [Grupo de Pesquisa Poéticas Tecnológicas](http://www.poeticatecnologica.ufba.br/site/), desenvolvido por [Pedro Lacerda](http://lattes.cnpq.br/8338596525330907) sob orientação da professora [Ivani Santana](http://ivanisantana.net/).
+Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.mx/) no [Grupo de Pesquisa Poéticas Tecnológicas](http://www.poeticatecnologica.ufba.br/site/). Foi desenvolvido por [Pedro Lacerda](http://lattes.cnpq.br/8338596525330907), sob orientação da professora [Ivani Santana](http://ivanisantana.net/), para o _Personare_, espetáculo de dança telemática apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em 27 e 28 de setembro de 2014. [Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica), [aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/).
+
+## Tabela de Conteúdos
+* [Introdução](#introdução)
+* [Requisitos e instalação](#requisitos-e-instalação)
+* [Arquitetura](#arquitetura)
+* [Guia rápido de uso](#guia-rápido-de-uso)
+* [Transmissão para o Youtube](#transmissão-pelo-youtube)
+* [Recepção de vídeo por aplicativos externos](#recepção-de-vídeo-por-aplicativos-externos)
+
 
 # Introdução
 
-TeleCorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [UltraGrid](http://www.ultragrid.cz/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Scenic2](http://code.sat.qc.ca/redmine/projects/scenic2/wiki), etc.
+Telecorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte de vídeo, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Snowmix](http://snowmix.sourceforge.net/), [UltraGrid](http://www.ultragrid.cz/), etc.
 
 Exceto para o Youtube, Telecorpo é incapaz de transmitir áudio, para isto experimente  [JackTrip](https://ccrma.stanford.edu/groups/soundwire/software/jacktrip/), [NetJack](http://netjack.sourceforge.net/), etc.
 
@@ -17,33 +26,57 @@ Algumas características da rede impactam na qualidade da transmissão,  observe
 característica da rede | impacto na transmissão | |
 ---------------------- | ---------- |----------- |
 delay | atraso na transmissão | para levar um pacote de dados de uma cidade até a outra, ele precisa percorrer uma distância e atravessar equipamentos de rede |
-perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar, tente aumentar a frequência de key-frames enviados para compensar as perdas facilitando a reconstrução da imagem no decodificador, vide `x264 --keyint` ou `x264enc key-int-max` |
+perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar, tente aumentar a frequência de key-frames enviados para compensar as perdas facilitando a reconstrução da imagem no decodificador, vide [`x264 --keyint`](http://manpages.ubuntu.com/manpages/intrepid/man1/x264.1.html) ou [`x264enc key-int-max`](http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-ugly-plugins/html/gst-plugins-ugly-plugins-x264enc.html) |
 jitter | pequeno atraso na transmissão | um cache/buffer aguarda por pacotes atrasados para evitar a reconstrução errônea da imagem, mas descarta os muito atrasados |
 
 A potência dos computadores também impacta no atraso/delay, custa um tempo capturar, codificar, decodificar e exibir. Computadores mais potentes podem realizar estas tarefas mais rapidamente. Comprimir os quadros/frames (**cod**ificar) custa mais processamento do que descomprimí-los (**dec**odificar), e por isso exibir é mais "leve" do que capturar.
 
-Foi utilizado no espetáculo Personare de dança telemática, apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em {27,28} de setembro de 2014. {[Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica),[aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/)}. A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
+ A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/1.png)
-
 
 # Requisitos e Instalação
 
 Você precisará de
 
 * internet acadêmica ou rede local
-* sistema operacional baseado em Debian (testado no Mint 17, Ubuntu 14.04, Debian 8.1)
+* sistema operacional baseado em Linux (testado no Mint 17, Ubuntu 14.04, Debian 8.1)
 * câmera USB/Webcam ou Firewire® DV
 * firewall desabilitado entre os computadores participantes
 
-Pacotes `.deb` são fornecidos para facilitar a instalação. Tanto do TeleCorpo, quanto da biblioteca GstRtspServer, requerida pelo TeleCorpo. Caso queira construí-los "na mão", execute o __script__ `./create-packages`, mas seria grato modificá-lo para gerar também pacotes `.rpm`.
+Pacotes `.deb` são fornecidos para facilitar a instalação. Tanto do TeleCorpo, quanto da biblioteca [GstRtspServer](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), requerida pelo TeleCorpo. Caso queira construí-los "na mão", execute o _script_ `./create-packages`, ainda mais grato seria modificá-lo para também gerar pacotes `.rpm`.
 
-**`telecorpo_0.92_amd64.deb`** | aaaa
------------------------------- | ----
+[**`telecorpo_0.92_all.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/telecorpo_0.92_all.deb) | [**`libgstrtspserver-1.0_1.4.4_amd64.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/libgstrtspserver-1.0_1.4.4_amd64.deb)
+-------------------------- | --------------------------------------
 
-    $ wget -q -O - https://raw.githubusercontent.com/pslacerda/telecorpo/master/install.sh | sudo bash
+Para instalá-los, entre com:
 
-O programa estará disponível no Menu Iniciar, ou pelo comando `telecorpo`.
+    $ dpkg -i libgstrtspserver-1.0_1.4.4_amd64.deb
+    $ dpkg -i telecorpo_0.92_all.deb
+
+, que então o programa estará disponível no Menu Iniciar e pelo comando `telecorpo`.
+
+# Arquitetura
+
+O desenho arquitetural da versão atual (v0.92) do Telecorpo consiste em três módulos essenciais para o funcionamento do programa, e um quarto, utilizado na transmissão para o grande público fora dos palcos. O protocolo subjacente escolhido foi o [RTSP](https://tools.ietf.org/html/rfc2326), semelhante ao HTTP, mas que transmite conteúdo audiovisual ao invés de hipertexto. Entretanto a vantagem da escolha foi o fato do RTSP disponibilizar os conteúdos (fluxos) por uma URL, tornando a ferramenta mais familiar para usuários não-técnicos.
+
+módulo | descrição
+------ | -----------
+`tc.producer` | captura uma ou mais câmeras e as disponibiliza como fluxos RTSP
+`tc.viewer`   | mesa de corte de vídeo que alterna entre os fluxos disponibilizados
+`tc.server`   | gerencia os fluxos ativos
+`tc.youtube`  | transmite video para o grande público
+
+O programa poderia ser dito não-_macarrônico_ de acordo com o [Progamador Pragmático](http://www.saraiva.com.br/o-programador-pragmatico-3674493.html), pois mudanças num módulo não interfeririam em outro, já que não há dependências explícitas entre eles. Baixíssimo acoplamento, portanto. Mas há dependências em tempo de execução, que ocorrem na dinâmica do sistema, exigindo uma ordem específica para inicialização dos componentes.
+
+Com o `server` em execução, o `producer` registra nele os fluxos produzidos (câmeras capturadas). Então o `server` passa a consultar periodicamente cada URL de fluxo para verificar se ainda está ativa, e desregistrá-la caso a consulta falhe. Já o `viewer` é mais simples, apenas inquere periodicamente o `server` pelas URLs de fluxos ainda ativos, isto é, não encerradas.
+
+O diagrama abaixo-esquerda mostra um `producer` registrando três câmeras diferentes, e sequência temporal de troca de mensagens relativas à câmera nomeada `fw0` até a consulta falhar, quando então `fw0` será desregistrada do `server`, significando que ou o `producer` foi encerrado ou falhou.  No diagrama abaixo-direita vê-se um `viewer` inquerindo pelas URLs de um `server` que possúi inicialmente um `producer` registrado com duas câmeras ativas, quando então um outro `producer` é adicionado com uma terceira câmera. Note que os dois diagramas se referem à sistemas diferentes.
+
+![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/diagram1.png)
+
+
+Também periodicamente, cada `viewer` consulta o `server` inquerindo as URLs ainda ativas.
 
 
 # Guia rápido de uso
@@ -53,8 +86,8 @@ Telecorpo é composto por alguns módulos diferentes:
 módulo | descrição
 --------- | -----------
 producer | captura uma ou mais câmeras e as disponibiliza como fluxos RTSP
-viewer | mesa de corte que alterna entre os fluxos disponibilizados
-server | indexa os fluxos ativos
+viewer | mesa de corte de vídeo que alterna entre os fluxos disponibilizados
+server | gerencia os fluxos ativos
 
 Estes módulos precisam ser inicializados numa ordem específica:
 
