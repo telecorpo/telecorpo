@@ -9,7 +9,7 @@ Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.m
 ## Tabela de Conteúdos
 * [Introdução](#introdução)
 * [Requisitos e instalação](#requisitos-e-instalação)
-* [Arquitetura](#arquitetura-e-implementação)
+* [Arquitetura e Implementação](#arquitetura-e-implementação)
 * [Guia rápido de uso](#guia-rápido-de-uso)
 * [Transmissão para o Youtube](#transmissão-pelo-youtube)
 * [Recepção de vídeo por aplicativos externos](#recepção-de-vídeo-por-aplicativos-externos)
@@ -17,17 +17,15 @@ Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.m
 
 # Introdução
 
-Telecorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte de vídeo, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Snowmix](http://snowmix.sourceforge.net/), [UltraGrid](http://www.ultragrid.cz/), etc.
-
-Exceto para o Youtube, Telecorpo é incapaz de transmitir áudio, para isto experimente  [JackTrip](https://ccrma.stanford.edu/groups/soundwire/software/jacktrip/), [NetJack](http://netjack.sourceforge.net/), etc.
+Telecorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte de vídeo, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Snowmix](http://snowmix.sourceforge.net/), [UltraGrid](http://www.ultragrid.cz/), etc. Exceto para o Youtube, Telecorpo é incapaz de transmitir áudio, para isto experimente  [JackTrip](https://ccrma.stanford.edu/groups/soundwire/software/jacktrip/), [NetJack](http://netjack.sourceforge.net/), etc.
 
 Algumas características da rede impactam na qualidade da transmissão,  observe-as:
 
 característica da rede | impacto na transmissão | |
 ---------------------- | ---------- |----------- |
-delay | atraso na transmissão | para levar um pacote de dados de uma cidade até a outra, ele precisa percorrer uma distância e atravessar equipamentos de rede |
-perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar, tente aumentar a frequência de key-frames enviados para compensar as perdas facilitando a reconstrução da imagem no decodificador, vide [`x264 --keyint`](http://manpages.ubuntu.com/manpages/intrepid/man1/x264.1.html) ou [`x264enc key-int-max`](http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-ugly-plugins/html/gst-plugins-ugly-plugins-x264enc.html) |
-jitter | pequeno atraso na transmissão | um cache/buffer aguarda por pacotes atrasados para evitar a reconstrução errônea da imagem, mas descarta os muito atrasados |
+_delay_ | atraso na transmissão | para levar um pacote de dados de uma cidade até a outra, ele precisa percorrer uma distância e atravessar equipamentos de rede |
+perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar a transmissão, tente aumentar a frequência de key-frames enviados para compensar as perdas facilitando a reconstrução da imagem no decodificador, vide [`x264 --keyint`](http://manpages.ubuntu.com/manpages/intrepid/man1/x264.1.html) ou [`x264enc key-int-max`](http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-ugly-plugins/html/gst-plugins-ugly-plugins-x264enc.html) |
+_jitter_ | pequeno atraso na transmissão | devido à natureza das redes de computadores, pacotes podem chegar fora de ordem, uns mais atrasados do que outros, portanto _cache/buffer_ aguarda por pacotes atrasados para evitar a reconstrução errônea da imagem, mas descarta os muito atrasados, que são considerados perdidos |
 
 A potência dos computadores também impacta no atraso/delay, custa um tempo capturar, codificar, decodificar e exibir. Computadores mais potentes podem realizar estas tarefas mais rapidamente. Comprimir os quadros/frames (**cod**ificar) custa mais processamento do que descomprimí-los (**dec**odificar), e por isso exibir é mais "leve" do que capturar.
 
@@ -58,7 +56,9 @@ Para instalá-los, entre com:
 
 # Arquitetura e Implementação
 
-O desenho arquitetural da versão atual (v0.92) do Telecorpo consiste em três módulos essenciais para o funcionamento do programa, e um quarto, utilizado na transmissão para o grande público fora dos palcos. O protocolo subjacente escolhido foi o [RTSP](https://tools.ietf.org/html/rfc2326), semelhante ao HTTP, mas que transmite conteúdo audiovisual ao invés de hipertexto. Entretanto a vantagem da escolha foi o fato do RTSP disponibilizar os conteúdos (fluxos) por uma URL, tornando a ferramenta mais familiar para usuários não-técnicos. Os _frameworks_ multimídia escolhidos foram o [GStreamer 1.0](http://gstreamer.freedesktop.org/) e o [gst-rtsp-server](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), ambos escritos em linguagem C. Devido à morosidade de se desenvolver aplicativos nesta linguagem, tais _frameworks_ foram utilizados na linguagem [Python 3](https://www.python.org/) através de _bindings_ gerados automaticamente pelo _middleware_ [GObject Introspection](https://wiki.gnome.org/Projects/GObjectIntrospection)).
+O desenho arquitetural da versão atual (v0.92) do Telecorpo consiste em três módulos essenciais para o funcionamento do programa, e um quarto, utilizado na transmissão para o grande público fora dos palcos. O protocolo subjacente escolhido foi o [RTSP](https://tools.ietf.org/html/rfc2326), semelhante ao HTTP, mas que transmite conteúdo audiovisual ao invés de hipertexto. Entretanto a vantagem da escolha foi o fato do RTSP disponibilizar os conteúdos (fluxos) por uma URL, tornando a ferramenta mais familiar para usuários não-técnicos.
+
+Os _frameworks_ multimídia escolhidos foram o [GStreamer 1.0](http://gstreamer.freedesktop.org/) e o [gst-rtsp-server](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), ambos escritos na linguagem de programação C. Devido à morosidade em se desenvolver aplicativos nesta linguagem, Telecorpo foi desenvolvido em [Python 3](https://www.python.org/), utilizando tais _frameworks_ através de _bindings_ gerados automaticamente pelo _middleware_ [GObject Introspection](https://wiki.gnome.org/Projects/GObjectIntrospection).
 
 módulo | descrição
 ------ | -----------
@@ -71,11 +71,11 @@ O programa poderia ser dito não-_macarrônico_ de acordo com o [Progamador Prag
 
 Com o `server` em execução, o `producer` registra nele os fluxos produzidos (câmeras capturadas). Então o `server` passa a consultar periodicamente cada URL de fluxo para verificar se ainda está ativa, e desregistrá-la caso a consulta falhe. Já o `viewer` é mais simples, apenas inquere periodicamente o `server` pelas URLs de fluxos ainda ativos, isto é, não encerradas.
 
-O diagrama abaixo-esquerda mostra um `producer` registrando três câmeras diferentes, e sequência temporal de troca de mensagens relativas à câmera nomeada `fw0` até a consulta falhar, quando então `fw0` será desregistrada do `server`, significando que ou o `producer` foi encerrado ou falhou.  No diagrama abaixo-direita vê-se um `viewer` inquerindo pelas URLs de um `server` que possúi inicialmente um `producer` registrado com duas câmeras ativas, quando então um outro `producer` é adicionado com uma terceira câmera. Note que os dois diagramas se referem à sistemas diferentes.
+O diagrama abaixo-esquerda mostra um `producer` registrando três câmeras diferentes, e sequência temporal de troca de mensagens relativas à câmera nomeada `fw0` até a consulta falhar, quando então `fw0` será desregistrada do `server`, significando que ou o `producer` foi encerrado ou falhou.  No diagrama abaixo-direita vê-se um `viewer` inquerindo pelas URLs de um `server` que possui inicialmente um `producer` registrado com duas câmeras ativas, quando então um outro `producer` é adicionado com uma terceira câmera. Note que os dois diagramas se referem à sistemas diferentes.
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/diagram1.png)
 
-Já o módulo `youtube`, utilizado para transmitir vídeos ao vivo para o [Youtube Live](http://youtube.com/live), é completamente independente dos demais módulos, podendo ser utilizado para transmitir conteúdo que não foi gerado pelo próprio TeleCorpo.
+Já o módulo `youtube`, utilizado para transmitir vídeos ao vivo para o [Youtube Live](http://youtube.com/live), é completamente independente dos demais módulos, podendo ser utilizado para transmitir conteúdo que não foi gerado pelo próprio TeleCorpo. É necessário ter o servidor [JACK Audio Connection Kit](http://jackaudio.org/) em execução, ferramenta popular nos nichos profissionais de áudio e artes.
 
 
 # Guia rápido de uso
