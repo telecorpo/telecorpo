@@ -75,8 +75,7 @@ O diagrama abaixo-esquerda mostra um `producer` registrando três câmeras difer
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/diagram1.png)
 
-
-Também periodicamente, cada `viewer` consulta o `server` inquerindo as URLs ainda ativas.
+Já o módulo `youtube`, utilizado para transmitir vídeos ao vivo para o [Youtube Live](http://youtube.com/live), é completamente independente dos demais módulos, podendo ser utilizado para transmitir conteúdo que não foi gerado pelo próprio TeleCorpo.
 
 
 # Guia rápido de uso
