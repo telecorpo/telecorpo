@@ -80,15 +80,9 @@ Já o módulo `youtube`, utilizado para transmitir vídeos ao vivo para o [Youtu
 
 # Guia rápido de uso
 
-Telecorpo é composto por alguns módulos diferentes:
+Apenas uma instância do `server` é necessária para o funcionamento do sistema. `producer`s e `viewer`s podem ser inicializados tantos quantos forem necessários. Se você tem duas câmeras em dois países diferentes, será necessário inicializar dois `producer`s, um em cada país. Similarmente, se você tem três projetores em três países diferentes, será necessário inicializar três `viewers`, um em cada país.
 
-módulo | descrição
---------- | -----------
-producer | captura uma ou mais câmeras e as disponibiliza como fluxos RTSP
-viewer | mesa de corte de vídeo que alterna entre os fluxos disponibilizados
-server | gerencia os fluxos ativos
-
-Estes módulos precisam ser inicializados numa ordem específica:
+Além de ser necessário iniciar os módulos em uma ordem específica devido à própria natureza dos sitemas distribuídos, existem defeitos de implementação que reafirmam a necessidade de cuidados na inicialização do sistema. O módulo `server` é o primeiro à ser executado, já que `producer`s e `viewer`s registram-se nele. Então, teoricamente, tantos quantos necessários, `producer`s e `viewer`s poderiam ser inicializados em qualquer ordem, mas devido à discrepâncias entre a arquitetura e implementação, poderá ser necessário inicializar primeiro os `producer`s, para então os `viewers`.
 
 1. Em uma das máquinas execute o comando `telecorpo server`. Apenas uma instância do servidor é necessária.![server.png](https://bitbucket.org/repo/RnKegx/images/1808291682-server.png)
 2. Nas máquinas com câmeras conectadas vá para *Menu iniciar > Telecorpo > Producer*, escolha uma ou mais câmeras disponíveis (dica: use Ctrl+Mouse), escreva o endereço de IP do servidor, aperte em *Registrate*.![producer.png](https://bitbucket.org/repo/RnKegx/images/2233534168-producer.png)
