@@ -16,7 +16,7 @@ underline=$(tput smul)
 reset=$(tput sgr0)
 
 
-#rm -rf build
+rm -rf build
 tree
 mkdir build
 
@@ -69,7 +69,7 @@ TC_VERSION=$(
     mkdir -p fake_root/usr/share/applications
 
     python3 setup.py install --root=fake_root
-    cp telecorpo.desktop fake_root/usr/share/applications
+    cp ../../telecorpo.desktop fake_root/usr/share/applications
 
     #  --python-package-name-prefix python3
     #  --python-pip /usr/bin/pip3 --python-bin /usr/bin/python3
@@ -79,6 +79,7 @@ TC_VERSION=$(
       -d gir1.2-gstreamer-1.0 \
       -d python3 \
       -d python3-tk)
+
 
 print_step          "[3/2]" "Listo"
 print_step ${yellow}"  /2 " "Done"
