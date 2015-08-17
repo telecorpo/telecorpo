@@ -19,12 +19,12 @@ Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.m
 
 Telecorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte de vídeo, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. Outras ferramentas para transmissão de vídeo são: [Arthron](http://gtavcs.lavid.ufpb.br/downloads/), [LoLa](http://www.conservatorio.trieste.it/artistica/lola-project/lola-low-latency-audio-visual-streaming-system), [Open Broadcaster Software](https://obsproject.com), [Scenic](http://code.sat.qc.ca/redmine/projects/scenic/wiki), [Snowmix](http://snowmix.sourceforge.net/), [UltraGrid](http://www.ultragrid.cz/), etc. Exceto para o Youtube, Telecorpo é incapaz de transmitir áudio, para isto experimente  [JackTrip](https://ccrma.stanford.edu/groups/soundwire/software/jacktrip/), [NetJack](http://netjack.sourceforge.net/), etc.
 
-Algumas características da rede impactam na qualidade da transmissão,  observe-as:
+Algumas características da rede impactam a qualidade da transmissão,  observe-as:
 
 característica da rede | impacto na transmissão | |
 ---------------------- | ---------- |----------- |
 _delay_ | atraso na transmissão | para levar um pacote de dados de uma cidade até a outra, ele precisa percorrer uma distância e atravessar equipamentos de rede |
-perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar a transmissão, tente aumentar a frequência de key-frames enviados para compensar as perdas facilitando a reconstrução da imagem no decodificador, vide [`x264 --keyint`](http://manpages.ubuntu.com/manpages/intrepid/man1/x264.1.html) ou [`x264enc key-int-max`](http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-ugly-plugins/html/gst-plugins-ugly-plugins-x264enc.html) |
+perda de pacotes | degradação da imagem | perdas superiores a 1% podem inviabilizar a transmissão, tente aumentar a frequência de key-frames enviados para compensar as perdas, facilitando a reconstrução da imagem no decodificador, vide [`x264 --keyint`](http://manpages.ubuntu.com/manpages/intrepid/man1/x264.1.html) ou [`x264enc key-int-max`](http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-ugly-plugins/html/gst-plugins-ugly-plugins-x264enc.html) |
 _jitter_ | pequeno atraso na transmissão | devido à natureza das redes de computadores, pacotes podem chegar fora de ordem, uns mais atrasados do que outros, portanto _cache/buffer_ aguarda por pacotes atrasados para evitar a reconstrução errônea da imagem, mas descarta os muito atrasados, que são considerados perdidos |
 
 A potência dos computadores também impacta no atraso/delay, custa um tempo capturar, codificar, decodificar e exibir. Computadores mais potentes podem realizar estas tarefas mais rapidamente. Comprimir os quadros/frames (**cod**ificar) custa mais processamento do que descomprimí-los (**dec**odificar), e por isso exibir é mais "leve" do que capturar.
@@ -42,7 +42,7 @@ Você precisará de
 * câmera USB/Webcam ou Firewire® DV
 * firewall desabilitado entre os computadores participantes
 
-Pacotes `.deb` são fornecidos para facilitar a instalação. Tanto do TeleCorpo, quanto da biblioteca [GstRtspServer](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), requerida pelo TeleCorpo. Caso queira construí-los "na mão", execute o _script_ `./create-packages`, ainda mais grato seria modificá-lo para também gerar pacotes `.rpm`.
+Pacotes `.deb` são fornecidos para facilitar a instalação. Tanto do TeleCorpo, quanto da biblioteca [GstRtspServer](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), requerida pelo TeleCorpo. Caso queira construí-los "à mão", execute o _script_ `./create-packages`, ainda mais grato seria modificá-lo para também gerar pacotes `.rpm`.
 
 [**`telecorpo_0.92_all.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/telecorpo_0.92_all.deb) | [**`libgstrtspserver-1.0_1.4.4_amd64.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/libgstrtspserver-1.0_1.4.4_amd64.deb)
 -------------------------- | --------------------------------------
@@ -58,7 +58,7 @@ Para instalá-los, entre com:
 
 O desenho arquitetural da versão atual (v0.92) do Telecorpo consiste em três módulos essenciais para o funcionamento do programa, e um quarto, utilizado na transmissão para o grande público fora dos palcos. O protocolo subjacente escolhido foi o [RTSP](https://tools.ietf.org/html/rfc2326), semelhante ao HTTP, mas que transmite conteúdo audiovisual ao invés de hipertexto. Entretanto a vantagem da escolha foi o fato do RTSP disponibilizar os conteúdos (fluxos) por uma URL, tornando a ferramenta mais familiar para usuários não-técnicos.
 
-Os _frameworks_ multimídia escolhidos foram o [GStreamer 1.0](http://gstreamer.freedesktop.org/) e o [gst-rtsp-server](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), ambos escritos na linguagem de programação C. Devido à morosidade em se desenvolver aplicativos nesta linguagem, Telecorpo foi desenvolvido em [Python 3](https://www.python.org/), utilizando tais _frameworks_ através de _bindings_ gerados automaticamente pelo _middleware_ [GObject Introspection](https://wiki.gnome.org/Projects/GObjectIntrospection).
+Os _frameworks_ multimídias escolhidos foram o [GStreamer 1.0](http://gstreamer.freedesktop.org/) e o [gst-rtsp-server](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), ambos escritos na linguagem de programação C. Devido à morosidade em se desenvolver aplicativos nesta linguagem, Telecorpo foi desenvolvido em [Python 3](https://www.python.org/), utilizando tais _frameworks_ através de _bindings_ gerados automaticamente pelo _middleware_ [GObject Introspection](https://wiki.gnome.org/Projects/GObjectIntrospection).
 
 módulo | descrição
 ------ | -----------
@@ -69,20 +69,20 @@ módulo | descrição
 
 O programa poderia ser dito não-_macarrônico_ de acordo com o [Progamador Pragmático](http://www.saraiva.com.br/o-programador-pragmatico-3674493.html), pois mudanças num módulo não interfeririam em outro, já que não há dependências explícitas entre eles. Baixíssimo acoplamento, portanto. Mas há dependências em tempo de execução, que ocorrem na dinâmica do sistema, exigindo uma ordem específica para inicialização dos componentes.
 
-Com o `server` em execução, o `producer` registra nele os fluxos produzidos (câmeras capturadas). Então o `server` passa a consultar periodicamente cada URL de fluxo para verificar se ainda está ativa, e desregistrá-la caso a consulta falhe. Já o `viewer` é mais simples, apenas inquere periodicamente o `server` pelas URLs de fluxos ainda ativos, isto é, não encerradas.
+Com o `server` em execução, o `producer` registra nele os fluxos produzidos (câmeras capturadas). Então o `server` passa a consultar periodicamente cada URL de fluxo para verificar se ainda está ativa, e desregistrá-la caso a consulta falhe. Já o `viewer` é mais simples, apenas inquere periodicamente o `server` pelas URLs de fluxos ainda ativos, isto é, não encerrados.
 
-O diagrama abaixo-esquerda mostra um `producer` registrando três câmeras diferentes, e sequência temporal de troca de mensagens relativas à câmera nomeada `fw0` até a consulta falhar, quando então `fw0` será desregistrada do `server`, significando que ou o `producer` foi encerrado ou falhou.  No diagrama abaixo-direita vê-se um `viewer` inquerindo pelas URLs de um `server` que possui inicialmente um `producer` registrado com duas câmeras ativas, quando então um outro `producer` é adicionado com uma terceira câmera. Note que os dois diagramas se referem à sistemas diferentes.
+O diagrama abaixo-esquerda mostra um `producer` registrando três câmeras diferentes, e sequência temporal de troca de mensagens relativas a câmera nomeada `fw0` até a consulta falhar, quando então `fw0` será desregistrada do `server`, significando que ou o `producer` foi encerrado ou falhou.  No diagrama abaixo-direita vê-se um `viewer` inquerindo a URLs de um `server` que possui inicialmente um `producer` registrado com duas câmeras ativas, quando então um outro `producer` é adicionado com uma terceira câmera. Note que os dois diagramas se referem a sistemas diferentes.
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/diagram1.png)
 
-Já o módulo `youtube`, utilizado para transmitir vídeos ao vivo para o [Youtube Live](http://youtube.com/live), é completamente independente dos demais módulos, podendo ser utilizado para transmitir conteúdo que não foi gerado pelo próprio TeleCorpo. É necessário ter o servidor [JACK Audio Connection Kit](http://jackaudio.org/) em execução, ferramenta popular nos nichos profissionais de áudio e artes.
+Já o módulo `youtube`, utilizado para transmitir vídeos ao vivo para o [Youtube Live](http://youtube.com/live), é completamente independente dos demais módulos, podendo ser utilizado para transmitir conteúdo que não foi gerado pelo próprio TeleCorpo. É requerido ter o servidor [JACK Audio Connection Kit](http://jackaudio.org/) em execução, ferramenta popular nos nichos profissionais de áudio e artes.
 
 
 # Guia rápido de uso
 
-Apenas uma instância do `server` é necessária para o funcionamento do sistema. `producers` e `viewers` podem ser inicializados tantos quantos forem necessários. Se você tem duas câmeras em dois países diferentes, será necessário inicializar dois `producers`, um em cada país. Similarmente, se você tem três projetores em três países diferentes, será necessário inicializar três `viewers`, um em cada país.
+Basta apenas uma instância do `server` para o funcionamento do sistema. Os `producer`s e `viewer`s podem ser inicializados tantos quantos forem precisos. Se você tem duas câmeras em dois países diferentes, será necessário inicializar dois `producer`s, um em cada país. Similarmente, se você tem três projetores em três países diferentes, será necessário inicializar três `viewer`s, um em cada país.
 
-Além de ser necessário iniciar os módulos em uma ordem específica devido à própria natureza dos sitemas distribuídos, existem defeitos de implementação que reafirmam a necessidade de cuidados na inicialização do sistema. O módulo `server` é sempre o primeiro à ser executado, já que `producers` e `viewers` registram-se nele. Então, teoricamente, tantos quantos necessários, `producers` e `viewers` poderiam ser inicializados em qualquer ordem, mas devido à discrepâncias entre a arquitetura e implementação, poderá ser necessário inicializar primeiro os `producers`, para então os `viewers`.
+Além de ser necessário iniciar os módulos em uma ordem específica devido à própria natureza dos sitemas distribuídos, existem defeitos de implementação que reafirmam a necessidade de cuidados na inicialização do sistema. O módulo `server` é sempre o primeiro à ser executado, já que `producer`s e `viewer`s se registram nele. Então, teoricamente, quantos forem demandados, `producer`s e `viewer`s poderiam ser inicializados em qualquer ordem, mas devido à discrepâncias entre a arquitetura e implementação, poderá ser necessário inicializar primeiro os `producer`s, para depois os `viewer`s.
 
 Veja abaixo a lista de etapas necessárias para utilização do TeleCorpo.
 
