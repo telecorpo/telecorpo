@@ -8,6 +8,7 @@ Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.m
 
 ## Tabela de Conteúdos
 * [Introdução](#introdução)
+* [Transmissão de vídeo](#transmissão-de-vídeo)
 * [Requisitos e instalação](#requisitos-e-instalação)
 * [Arquitetura e Implementação](#arquitetura-e-implementação)
 * [Guia rápido de uso](#guia-rápido-de-uso)
@@ -91,7 +92,7 @@ Já o módulo `youtube`, utilizado para transmitir vídeos ao vivo para o [Youtu
 
 Basta apenas uma instância do `server` para o funcionamento do sistema. Os `producer`s e `viewer`s podem ser inicializados tantos quantos forem precisos. Se você tem duas câmeras em dois países diferentes, será necessário inicializar dois `producer`s, um em cada país. Similarmente, se você tem três projetores em três países diferentes, será necessário inicializar três `viewer`s, um em cada país.
 
-Além de ser necessário iniciar os módulos em uma ordem específica devido à própria natureza dos sitemas distribuídos, existem defeitos de implementação que reafirmam a necessidade de cuidados na inicialização do sistema. O módulo `server` é sempre o primeiro à ser executado, já que `producer`s e `viewer`s se registram nele. Então, teoricamente, quantos forem demandados, `producer`s e `viewer`s poderiam ser inicializados em qualquer ordem, mas devido à discrepâncias entre a arquitetura e implementação, poderá ser necessário inicializar primeiro os `producer`s, para depois os `viewer`s.
+Além de ser eixigada uma ordem específica para inicialização dos módulos devido à própria natureza dos sitemas distribuídos, existem defeitos de implementação que reafirmam a necessidade de cuidados na inicialização do sistema. O módulo `server` é sempre o primeiro à ser executado, já que `producer`s e `viewer`s se registram nele. Então, teoricamente, quantos forem demandados, `producer`s e `viewer`s poderiam ser inicializados em qualquer ordem, mas devido à discrepâncias entre a arquitetura e implementação, deverá inicializar primeiro os `producer`s, para depois os `viewer`s.
 
 Veja abaixo a lista de etapas necessárias para utilização do TeleCorpo.
 
