@@ -63,6 +63,7 @@ Para instalá-los, entre com:
 
     $ dpkg -i libgstrtspserver-1.0_1.4.4_amd64.deb
     $ dpkg -i telecorpo_0.92_all.deb
+    $ apt-get -f install
 
 , que então o programa estará disponível no Menu Iniciar e pelo comando `telecorpo`.
 
