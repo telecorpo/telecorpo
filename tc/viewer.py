@@ -50,12 +50,16 @@ class Pipeline:
 
     def build(self):
         self.selector = Gst.ElementFactory.make('input-selector', None)
-        main_sink = Gst.ElementFactory.make('autovideosink', 'main-sink') 
+        main_sink_queue = Gst.ElementFactory.make('queue', None)
+        main_sink = Gst.ElementFactory.make('autovideosink', 'main-sink')
+        main_sink.set_property('sync', False)
 
         self.pipe.add(self.selector)
+        self.pipe.add(main_sink_queue)
         self.pipe.add(main_sink)
 
-        self.selector.link(main_sink)
+        self.selector.link(main_sink_queue)
+        main_sink_queue.link(main_sink)
 
         index = -1
         for url in self.urls:
@@ -97,9 +101,6 @@ class Pipeline:
 
     def select(self, url):
         index = self.url_to_index[url]
-        print(url)
-        print(index)
-        print()
         Gst.debug_bin_to_dot_file(self.pipe, Gst.DebugGraphDetails.CAPS_DETAILS, "pipe")
         selected_pad = self.selector.get_static_pad("sink_{}".format(index))
         self.selector.set_property('active-pad', selected_pad)
