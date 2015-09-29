@@ -14,7 +14,7 @@ Gst.init()
 
 
 class YoutubeStreamer:
-    
+
     _resolutions = {
         '240p': (426, 240, 300, 700, 400),
         '360p': (640, 360, 400, 1000, 750),
@@ -34,13 +34,13 @@ class YoutubeStreamer:
             self.source = source
         else:
             raise ValueError("{} must be an URI or Gst.Element".format(source))
-        
+
         if resolution not in self._resolutions:
             message = "{} is not a valid resolution".format(resolution)
             raise ValueError(message)
         self.width = self._resolutions[resolution][0]
         self.height = self._resolutions[resolution][1]
-        
+
         recomended_bitrate = self._resolutions[resolution][4]
         bitrate = bitrate or recomended_bitrate
 
@@ -50,57 +50,36 @@ class YoutubeStreamer:
             message = "{} do not allow this bitrate ({})".format(resolution,
                                                                  bitrate)
             raise ValueError(message)
-        
+
         self.abitrate = 128
-        self.vbitrate = bitrate - self.abitrate
-        self.destination = "".join([
-            "{}/x/{}".format(self._backup_url if backup else self._server_url,
-                             token),
-            "?videoKeyframeFrequency=2",
-            "&totalDatarate={}".format(bitrate),
-            " app=live2",
-            " flashVer=FME/3.0%20(compatible;%20FMSc%201.0)",
-            " swfUrl={}".format(self._backup_url if backup else self._server_url)
-        ])
+        self.vbitrate = bitrate # bitrate - self.abitrate
+
+        server_url = self._backup_url if backup else self._server_url
+        self.destination = "{}/{}".format(server_url, token)
 
     def build_pipeline(self):
         video_format = ",".join([
             "video/x-raw",
-            "format=I420",
-            "pixel-aspect-ratio=1/1",
-            "interlace-mode=progressive",
+            "framerate=30/1",
             "width={}".format(self.width),
             "height={}".format(self.height),
         ])
 
         audio_format = ",".join([
             "audio/x-raw",
-            "format=S16LE",
-            "endianness=1234",
-            "signed=true",
-            "width=16",
-            "depth=16",
-            "rate=44100",
-            "channels=1"
+            "channels=2"
         ])
 
         stream_bin = Gst.parse_bin_from_description("""
-            videoconvert ! videoscale ! {video_format} ! queue
-            ! x264enc bitrate={self.vbitrate}
-                      key-int-max=2
-                      bframes=0
-                      byte-stream=false
-                      aud=true
-                      cabac=true
-                      tune=zerolatency
-            ! h264parse ! video/x-h264,level=(string)4.1,profile=main ! queue
-            ! mux.
+            videoconvert ! videoscale ! videorate ! {video_format} ! queue
+            ! x264enc bitrate={self.vbitrate} speed-preset=ultrafast
+            ! h264parse ! queue ! mux.
 
-            audiotestsrc is-live=true wave=silence ! {audio_format}
+            jackaudiosrc client-name=tc ! {audio_format} ! audioconvert
             ! queue ! voaacenc bitrate={self.abitrate} ! queue ! mux.
 
             flvmux name=mux streamable=true ! queue
-            ! rtmpsink location='{self.destination}'
+            ! rtmpsink location={self.destination}
         """.format(**locals()), True)
 
         self.pipeline = Gst.Pipeline()
@@ -140,7 +119,7 @@ if __name__ == '__main__':
     from gi.repository import GObject
 
     Gst.init()
-    
+
     parser = argparse.ArgumentParser(
         formatter_class=lambda prog: argparse.HelpFormatter(prog,
                                                             max_help_position=27))
@@ -151,9 +130,9 @@ if __name__ == '__main__':
             help="eg. 360p, 720p")
     parser.add_argument("-b", "--bitrate", type=int)
     parser.add_argument("uri", type=str, default="v4l2://",
-            help="source URI (eg. rtsp://server:8554/video.mp4")
+            help="source URI (eg. rtsp://server:8554/video.mp4 or v4l2:///dev/video0")
     args = parser.parse_args()
-    
+
     primary = YoutubeStreamer(args.uri, args.token, args.resolution)
     primary.start()
 
