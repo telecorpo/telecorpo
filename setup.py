@@ -10,6 +10,10 @@ class CustomInstallCommand(install):
     def run(self):
         install.run(self)
         etcdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'etc')
+        if platform.machine() == 'x86_64':
+            etcdir = os.path.join(etcdir, 'amd64')
+        else:
+            etcdir = os.path.join(etcdir, 'i386')
 
         copies = [('/usr/share/gir-1.0', 'GstRtspServer-1.0.gir'),
                   ('/usr/lib/girepository-1.0', 'GstRtspServer-1.0.typelib'),
