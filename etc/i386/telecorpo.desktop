@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Name=Telecorpo
-Exec=telecorpo
-Terminal=false
-Type=Application
-Icon=video-projector
-Categories=Network;Video;
-StartupWMClass=telecorpo
