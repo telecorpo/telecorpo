@@ -31,5 +31,5 @@ if len(sys.argv) == 2:
     elif module == 'producer':
         producer.main()
     else:
-        print 'Error: module %s not found' % module
+        print('Error: module %s not found' % module)
 

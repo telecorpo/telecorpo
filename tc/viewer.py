@@ -52,7 +52,6 @@ class Pipeline:
         self.selector = Gst.ElementFactory.make('input-selector', None)
         main_sink_queue = Gst.ElementFactory.make('queue', None)
         main_sink = Gst.ElementFactory.make('autovideosink', 'main-sink')
-        main_sink.set_property('sync', False)
 
         self.pipe.add(self.selector)
         self.pipe.add(main_sink_queue)
@@ -67,7 +66,7 @@ class Pipeline:
             self.url_to_index[url] = index
 
             src = Gst.ElementFactory.make("rtspsrc", None)
-            src.set_property("latency", 100)
+            src.set_property("latency", 30)
             src.set_property("location", url)
 
             queue1 = Gst.ElementFactory.make("queue", None)
@@ -85,10 +84,8 @@ class Pipeline:
             self.pipe.add(convert)
             self.pipe.add(rate)
 
-            src.connect("pad-added", self.on_pad_added, queue1)
-            queue1.link(decode)
-            decode.connect("pad-added", self.on_pad_added, queue2)
-            queue2.link(scale)
+            src.connect("pad-added", self.on_pad_added, decode)
+            decode.connect("pad-added", self.on_pad_added, scale)
             scale.link(convert)
             convert.link(rate)
             rate.link(self.selector)

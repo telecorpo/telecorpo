@@ -1,11 +1,8 @@
-from setuptools import setup, find_packages
-from setuptools.command.install import install
-
+from distutils.core import setup
 
 setup(
     name = 'telecorpo',
-    version = '0.99',
-    
-    packages = find_packages(),
+    version = '0.102',
+    packages = ['tc'],
     scripts = ['telecorpo'],
 )

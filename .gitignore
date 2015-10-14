@@ -1,6 +1,7 @@
 venv/
 dist/
 build/
+fake_root/
 __pycache__/
 _trial_temp/
 .idea/
