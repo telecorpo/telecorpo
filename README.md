@@ -50,26 +50,22 @@ A potência dos computadores também impacta no atraso/delay, custa um tempo cap
 Você precisará de
 
 * internet acadêmica ou rede local
-* sistema operacional baseado em Linux (testado no Mint 17, Ubuntu 14.04, Debian 8.1)
+* sistema operacional baseado em Linux (testado no Debian 9)
 * câmera USB/Webcam ou Firewire® DV
 * firewall desabilitado entre os computadores participantes
 
-Para instalar basta executar a seguinte linha num terminal de comandos:
+O pacote seguinte `.deb` é fornecido para facilitar a instalação em alguns casos. Caso queira construí-los "à mão", execute o _script_ `./create-packages`, ainda mais grato seria modificá-lo para também gerar pacotes `.rpm`.
 
-    $ wget -q -O - https://raw.githubusercontent.com/telecorpo/telecorpo/master/install.sh | sudo bash
+[**`telecorpo_0.102_all.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/telecorpo_0.102_all.deb)
 
-Alternativamente pacotes `.deb` também são fornecidos para facilitar a instalação em alguns casos. Tanto do TeleCorpo, quanto da biblioteca [GstRtspServer](http://cgit.freedesktop.org/gstreamer/gst-rtsp-server/), requerida pelo TeleCorpo. Caso queira construí-los "à mão", execute o _script_ `./create-packages`, ainda mais grato seria modificá-lo para também gerar pacotes `.rpm`.
+Para instalá-lo, baixe o arquivo e execute a seguinte linha num terminal de comandos:
 
-[**`telecorpo_0.94_all.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/telecorpo_0.94_all.deb) | [**`libgstrtspserver-1.0_1.4.4_amd64.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/libgstrtspserver-1.0_1.4.4_amd64.deb)
--------------------------- | --------------------------------------
-
-Para instalá-los, entre com:
-
-    $ dpkg -i libgstrtspserver-1.0_1.4.4_amd64.deb
-    $ dpkg -i telecorpo_0.92_all.deb
+    $ dpkg -i telecorpo_0.102_all.deb
     $ apt-get -f install
 
-, que então o programa estará disponível no Menu Iniciar e pelo comando `telecorpo`.
+Após a instalação o programa estará disponível no Menu Iniciar e pelo comando `telecorpo`. Alternativamente também é possível instalá-lo com a seguinte linha:
+
+    $ wget -q -O - https://raw.githubusercontent.com/telecorpo/telecorpo/master/install.sh | sudo bash
 
 # Arquitetura e Implementação
 
