@@ -14,7 +14,8 @@ Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.m
 * [Guia rápido de uso](#guia-rápido-de-uso)
 * [Transmissão para o Youtube](#transmissão-pelo-youtube)
 * [Recepção de vídeo por aplicativos externos](#recepção-de-vídeo-por-aplicativos-externos)
-* [TODO](#todo
+* **[Todo](#todo)** *procura-se desenvolvedores*
+* 
 # Requisitos e Instalação
 
 Você precisará de
@@ -144,7 +145,7 @@ Na webcam virtual `/dev/video11` estará disponível o stream `rtsp://10.0.0.1:1
 
     $ sudo modprobe -r v4l2loopback
 
-# TODO
+# Todo
 
  * Descobrir todas as portas usadas pela aplicação
  * Melhorar a interface Tkinter ou reescrever em Qt ou Gtk
@@ -152,3 +153,5 @@ Na webcam virtual `/dev/video11` estará disponível o stream `rtsp://10.0.0.1:1
   * `tc.server` é descartado
   * `tc.producer`s enviam suas URLs a cada instante.
   * `tc.viewer`s recebem URLs periodicamente, quando param de receber o `tc.producer` foi encerrado.
+* Mais pacotes FPM:
+  * RPM, BREW, etc
