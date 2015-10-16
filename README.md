@@ -159,3 +159,4 @@ Você pode ser o próximo desenvolvedor/mantenedor: Sinta-se livre para mandar e
   * `tc.viewer`s recebem URLs periodicamente, quando param de receber o `tc.producer` foi encerrado.
  * Mais pacotes FPM:
   * RPM, BREW, etc
+  * Git hooks para gerar pacotes DEB automaticamente
