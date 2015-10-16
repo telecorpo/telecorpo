@@ -147,7 +147,7 @@ Na webcam virtual `/dev/video11` estará disponível o stream `rtsp://10.0.0.1:1
 
 # Todo
 
-Sinta-se livre para forks, mensagens, issues, emails, etc!
+Sinta-se livre para mandar emails, forks, mensagens, issues, etc!
 
  * Descobrir todas as portas usadas pela aplicação
  * Melhorar a interface Tkinter ou reescrever em Qt ou Gtk
@@ -155,5 +155,5 @@ Sinta-se livre para forks, mensagens, issues, emails, etc!
   * `tc.server` é descartado
   * `tc.producer`s enviam suas URLs a cada instante.
   * `tc.viewer`s recebem URLs periodicamente, quando param de receber o `tc.producer` foi encerrado.
-* Mais pacotes FPM:
+ * Mais pacotes FPM:
   * RPM, BREW, etc
