@@ -146,11 +146,13 @@ Na webcam virtual `/dev/video11` estará disponível o stream `rtsp://10.0.0.1:1
     $ sudo modprobe -r v4l2loopback
 
 # Todo
-
-Sinta-se livre para mandar emails, forks, mensagens, issues, etc!
+Você pode ser o próximo desenvolvedor/mantenedor: Sinta-se livre para mandar emails, forks, mensagens, issues, etc!
 
  * Descobrir todas as portas usadas pela aplicação
  * Melhorar a interface Tkinter ou reescrever em Qt ou Gtk
+  * Vários ajustes de design necessários!
+  * expor na interface gráfica a variável `latency` do elemento `rtspsrc`
+  * expor na interface gráfica a variável `speed-preset` do `x264enc`
  * Já pensou um canal UDP?
   * `tc.server` é descartado
   * `tc.producer`s enviam suas URLs a cada instante.
