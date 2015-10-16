@@ -11,12 +11,13 @@ Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.m
 
 Você precisará de
 
-* internet acadêmica ou rede local
-* sistema operacional baseado em Linux
+* Internet acadêmica ou rede local
+* Sistema operacional baseado em Linux
   * Debian 9 (stretch) - TESTADO
   * Ubuntu 15.04 (vivide vervet) - NÃO TESTADO
-* câmera USB/Webcam ou 1394/Firewire® DV
-* firewall desabilitado entre os computadores participantes
+* Câmera USB/Webcam ou Firewire® DV
+* Firewall desabilitado entre os computadores participantes
+  * exceto consumidor como `tc.viewer`,  VLC, gst-launch, etc
 
 O pacote seguinte `.deb` é fornecido para facilitar a instalação em alguns casos. Caso queira construí-los "à mão", execute o _script_ `./create-packages`, ainda mais grato seria modificá-lo para também gerar pacotes `.rpm`.
 
