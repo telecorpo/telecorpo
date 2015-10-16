@@ -15,7 +15,7 @@ Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.m
 * [Transmissão para o Youtube](#transmissão-pelo-youtube)
 * [Recepção de vídeo por aplicativos externos](#recepção-de-vídeo-por-aplicativos-externos)
 * **[Todo](#todo)** *procura-se desenvolvedores*
-* 
+
 # Requisitos e Instalação
 
 Você precisará de
