@@ -4,20 +4,41 @@
 
 # TeleCorpo
 
-NOVO MANUAL EM BREVE
-
 Este é produto de uma pesquisa iniciada pouco após o [EVD58](http://embodied.mx/) no [Grupo de Pesquisa Poéticas Tecnológicas](http://www.poeticatecnologica.ufba.br/site/). Foi desenvolvido por [Pedro Lacerda](http://lattes.cnpq.br/8338596525330907), sob orientação da professora [Ivani Santana](http://ivanisantana.net/), para o _Personare_, espetáculo de dança telemática apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em 27 e 28 de setembro de 2014. [Mais](http://www.fmh.utl.pt/pt/noticias/fmh-e-noticia/item/2203-espetaculo-de-danca-personare-embodied-in-varios-darmstadt-58-dias-27-e-28-de-setembro-de-2014-na-fmh), [informações](http://www.anillaculturalmac.cl/es/eventos/personare_embodied_in_varios_darmstadt58_danza_telematica), [aqui](http://www.cultura.ba.gov.br/2014/09/24/espetaculo-de-danca-telematico-personare/).
 
+
+# Requisitos e Instalação
+
+Você precisará de
+
+* internet acadêmica ou rede local
+* sistema operacional baseado em Linux (testado no Debian 9)
+* câmera USB/Webcam ou Firewire® DV
+* firewall desabilitado entre os computadores participantes
+
+O pacote seguinte `.deb` é fornecido para facilitar a instalação em alguns casos. Caso queira construí-los "à mão", execute o _script_ `./create-packages`, ainda mais grato seria modificá-lo para também gerar pacotes `.rpm`.
+
+[**`telecorpo_0.102_all.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/telecorpo_0.102_all.deb)
+
+Para instalá-lo, baixe o arquivo e execute a seguinte linha num terminal de comandos:
+
+    $ dpkg -i telecorpo_0.102_all.deb
+    $ apt-get -f install
+
+Após a instalação o programa estará disponível no Menu Iniciar e pelo comando `telecorpo`. Alternativamente também é possível instalá-lo com a seguinte linha:
+
+    $ wget -q -O - https://raw.githubusercontent.com/telecorpo/telecorpo/master/install.sh | sudo bash
+
 ## Tabela de Conteúdos
+* [Requisitos e instalação](#requisitos-e-instalação)
 * [Introdução](#introdução)
 * [Transmissão de vídeo](#transmissão-de-vídeo)
-* [Requisitos e instalação](#requisitos-e-instalação)
 * [Arquitetura e Implementação](#arquitetura-e-implementação)
 * [Guia rápido de uso](#guia-rápido-de-uso)
 * [Transmissão para o Youtube](#transmissão-pelo-youtube)
 * [Recepção de vídeo por aplicativos externos](#recepção-de-vídeo-por-aplicativos-externos)
 
-
+    
 # Introdução
 
 Telecorpo é mais uma ferramenta para transmissão de vídeo pela internet ou rede local. Distingue-se pela boa tolerância à perda de pacotes, compatibilidade com programas artísticos, como [Pure Data](http://puredata.info/) e  [Max/MSP/Jitter](http://cycling74.com/products/max/), e por transmitir eventos multicâmera ao vivo pelo [Youtube](https://www.youtube.com/). Pode ser entendida como uma mesa de corte de vídeo, na qual cada ponto de exibição pode alternar entre câmeras espalhadas pela rede. É o produto de uma pesquisa iniciada pouco após o espetáculo [EVD58](http://embodied.mx/) no [Grupo de Pesquisa Poéticas Tecnológicas](http://www.poeticatecnologica.ufba.br/site/), e foi desenvolvido para o _Personare_, espetáculo de dança telemática apresentado em simultâneo e ao vivo entre Brasil, Chile e Portugal em 27 e 28 de setembro de 2014. A transmissão ao vivo pelo Youtube ocorreu [neste link](http://youtu.be/r64rytEinE0?t=1h4m31s) (sem áudio por motivos secundários).
@@ -44,28 +65,6 @@ A potência dos computadores também impacta no atraso/delay, custa um tempo cap
 
 
 ![ilustração](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/images/1.png)
-
-# Requisitos e Instalação
-
-Você precisará de
-
-* internet acadêmica ou rede local
-* sistema operacional baseado em Linux (testado no Debian 9)
-* câmera USB/Webcam ou Firewire® DV
-* firewall desabilitado entre os computadores participantes
-
-O pacote seguinte `.deb` é fornecido para facilitar a instalação em alguns casos. Caso queira construí-los "à mão", execute o _script_ `./create-packages`, ainda mais grato seria modificá-lo para também gerar pacotes `.rpm`.
-
-[**`telecorpo_0.102_all.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/telecorpo_0.102_all.deb)
-
-Para instalá-lo, baixe o arquivo e execute a seguinte linha num terminal de comandos:
-
-    $ dpkg -i telecorpo_0.102_all.deb
-    $ apt-get -f install
-
-Após a instalação o programa estará disponível no Menu Iniciar e pelo comando `telecorpo`. Alternativamente também é possível instalá-lo com a seguinte linha:
-
-    $ wget -q -O - https://raw.githubusercontent.com/telecorpo/telecorpo/master/install.sh | sudo bash
 
 # Arquitetura e Implementação
 
