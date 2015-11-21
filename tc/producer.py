@@ -21,13 +21,13 @@ def test_source(elem):
 
 
 def probe_sources():
-    sources = {'smpte': "videotestsrc do-timestamp=true is-live=true"}
+    sources = {'smpte': "videotestsrc is-live=true"}
 
     if test_source('dv1394src'):
-        sources['dv1394'] = "dv1394src do-timestamp=true ! dvdemux ! dvdec"
+        sources['dv1394'] = "dv1394src ! dvdemux ! dvdec"
 
     for dev in glob.glob('/dev/video*'):
-        elem = 'v4l2src do-timestamp=true device={}'.format(dev)
+        elem = 'v4l2src device={}'.format(dev)
         name = dev[5:]
         if test_source(elem):
             sources[name] = elem
@@ -43,8 +43,7 @@ def run_rtsp_server(sources):
     for mount_point, pipeline in sources.items():
         launch = ("( {} ! queue ! videoconvert ! videoscale ! videorate"
                   " ! video/x-raw,format=I420 ! queue"
-                  # i don't know if theese parameters go well together, try each one separately
-                  " ! x264enc speed-preset=ultrafast tune=zerolatency intra-refresh=true key-int-max=0"
+                  " ! x264enc tune=zerolatency intra-refresh=true key-int-max=0"
                   " ! queue ! rtph264pay pt=96 name=pay0 )"
                   "".format(pipeline))
         factory = GstRtspServer.RTSPMediaFactory()
