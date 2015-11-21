@@ -1,8 +1,10 @@
 from distutils.core import setup
 
+version = open('VERSION').readline().strip()
+
 setup(
     name = 'telecorpo',
-    version = '0.102',
+    version = version,
     packages = ['tc'],
     scripts = ['telecorpo'],
 )
