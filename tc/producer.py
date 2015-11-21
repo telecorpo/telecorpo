@@ -1,4 +1,5 @@
 
+import gi
 import glob
 import ipaddress
 import socket
@@ -7,6 +8,9 @@ import threading
 import tkinter as tk
 
 from tkinter import ttk, messagebox
+
+gi.require_version('Gst', '1.0')
+gi.require_version('GstRtspServer', '1.0')
 from gi.repository import Gst, GstRtspServer, GObject
 
 
@@ -34,18 +38,18 @@ def probe_sources():
     return sources
 
 
-def run_rtsp_server(sources):
+def run_rtsp_server(sources, x264flags):
 
     server = GstRtspServer.RTSPServer()
     server.set_service("13371")
     
     mounts = server.get_mount_points()
     for mount_point, pipeline in sources.items():
-        launch = ("( {} ! queue ! videoconvert ! videoscale ! videorate"
-                  " ! video/x-raw,format=I420 ! queue"
-                  " ! x264enc tune=zerolatency intra-refresh=true key-int-max=0"
+        launch = ("( {} ! videoconvert ! videoscale ! videorate"
+                  " ! queue"
+                  " ! x264enc {}"
                   " ! queue ! rtph264pay pt=96 name=pay0 )"
-                  "".format(pipeline))
+                  "".format(pipeline, x264flags))
         factory = GstRtspServer.RTSPMediaFactory()
         factory.set_launch(launch)
         factory.set_shared(True)
@@ -95,12 +99,19 @@ class MainWindow(tk.Frame):
         self.entry.insert(0, "server address")
         self.entry.bind('<Return>', self.on_click)
         self.entry.bind('<FocusIn>', entry_placeholder)
-        self.entry.grid(row=0, column=0, sticky='nsew')
+        self.entry.grid(row=1, column=0, sticky='nsew')
+
+        self.entry_flags = ttk.Entry(self.form)
+        self.entry_flags.insert(0, "tune=zerolatency "
+                                   "intra-refresh=true "
+                                   "key-int-max=0")
+        self.entry_flags.grid(row=0, column=0, sticky='nsew')
+
         self.form.columnconfigure(0, weight=1)
 
         self.button = ttk.Button(self.form, text="Registrate",
                                  command=self.on_click)
-        self.button.grid(row=0, column=1)
+        self.button.grid(row=0, column=1, rowspan=2)
 
     def get_selected_sources(self):
         sources = {}
@@ -121,8 +132,9 @@ class MainWindow(tk.Frame):
         self.tree.configure(selectmode='none')
 
         # run RTSP server
+        x264flags = self.entry_flags.get().strip()
         rtsp_thread = threading.Thread(target=run_rtsp_server,
-                                       args=(selected_sources,),
+                                       args=(selected_sources, x264flags),
                                        daemon=True)
         rtsp_thread.start()
 
