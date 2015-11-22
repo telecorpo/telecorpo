@@ -30,11 +30,11 @@ Você precisará de
 
 O pacote seguinte `.deb` é fornecido para facilitar a instalação em alguns casos. Caso queira construí-los "à mão", execute o _script_ `./create-packages`, ainda mais grato seria modificá-lo para também gerar pacotes `.rpm`.
 
-[**`telecorpo_0.105_all.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/telecorpo_0.105_all.deb)
+[**`telecorpo_0.106.deb`**](https://raw.githubusercontent.com/wiki/pslacerda/telecorpo/telecorpo_0.106.deb)
 
 Para instalá-lo, baixe o arquivo e execute a seguinte linha num terminal de comandos:
 
-    $ dpkg -i telecorpo_0.105_all.deb
+    $ dpkg -i telecorpo_0.106.deb
     $ apt-get -f install
 
 Após a instalação o programa estará disponível no Menu Iniciar e pelo comando `telecorpo`. Alternativamente também é possível instalá-lo com a seguinte linha:
