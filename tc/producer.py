@@ -3,7 +3,6 @@ import gi
 import glob
 import ipaddress
 import socket
-import textwrap
 import threading
 import tkinter as tk
 
@@ -38,7 +37,7 @@ def probe_sources():
     return sources
 
 
-def run_rtsp_server(sources, x264flags):
+def run_rtsp_server(sources, x264params):
 
     server = GstRtspServer.RTSPServer()
     server.set_service("13371")
@@ -49,7 +48,7 @@ def run_rtsp_server(sources, x264flags):
                   " ! queue"
                   " ! x264enc {}"
                   " ! queue ! rtph264pay pt=96 name=pay0 )"
-                  "".format(pipeline, x264flags))
+                  "".format(pipeline, x264params))
         factory = GstRtspServer.RTSPMediaFactory()
         factory.set_launch(launch)
         factory.set_shared(True)
@@ -80,10 +79,10 @@ class MainWindow(tk.Frame):
         self.draw_connection_form()
     
     def draw_source_list(self):
-        self.tree = ttk.Treeview(self.master)
+        self.cam_tree = ttk.Treeview(self.master)
         for source_name in self.available_sources:
-            self.tree.insert('', 'end', text=source_name)
-        self.tree.grid(row=0, sticky='nsew')
+            self.cam_tree.insert('', 'end', text=source_name)
+        self.cam_tree.grid(row=0, sticky='nsew')
         self.master.rowconfigure(0, weight=1)
         self.master.columnconfigure(0, weight=1)
 
@@ -92,20 +91,20 @@ class MainWindow(tk.Frame):
         self.form.grid(row=1, sticky='nsew')
         
         def entry_placeholder(dummy):
-            self.entry.delete(0, 'end')
-            self.entry.unbind('<FocusIn>')
+            self.addr_entry.delete(0, 'end')
+            self.addr_entry.unbind('<FocusIn>')
 
-        self.entry = ttk.Entry(self.form)
-        self.entry.insert(0, "server address")
-        self.entry.bind('<Return>', self.on_click)
-        self.entry.bind('<FocusIn>', entry_placeholder)
-        self.entry.grid(row=1, column=0, sticky='nsew')
+        self.addr_entry = ttk.Entry(self.form)
+        self.addr_entry.insert(0, "server address")
+        self.addr_entry.bind('<Return>', self.on_click)
+        self.addr_entry.bind('<FocusIn>', entry_placeholder)
+        self.addr_entry.grid(row=1, column=0, sticky='nsew')
 
-        self.entry_flags = ttk.Entry(self.form)
-        self.entry_flags.insert(0, "tune=zerolatency "
+        self.h264_entry = ttk.Entry(self.form)
+        self.h264_entry.insert(0, "tune=zerolatency "
                                    "intra-refresh=true "
                                    "key-int-max=0")
-        self.entry_flags.grid(row=0, column=0, sticky='nsew')
+        self.h264_entry.grid(row=0, column=0, sticky='nsew')
 
         self.form.columnconfigure(0, weight=1)
 
@@ -115,8 +114,8 @@ class MainWindow(tk.Frame):
 
     def get_selected_sources(self):
         sources = {}
-        for item in self.tree.selection():
-            name = self.tree.item(item, 'text')
+        for item in self.cam_tree.selection():
+            name = self.cam_tree.item(item, 'text')
             sources[name] = self.available_sources[name]
         return sources
 
@@ -128,29 +127,32 @@ class MainWindow(tk.Frame):
                                    "Select at least one video source")
             return
         
-        # disable source selection
-        self.tree.configure(selectmode='none')
+        # disable registration
+        self.cam_tree.configure(selectmode='none')
+        self.addr_entry.configure(state='disabled')
+        self.h264_entry.configure(state='disabled')
+        self.button.configure(state='disabled')
 
         # run RTSP server
-        x264flags = self.entry_flags.get().strip()
+        x264params = self.h264_entry.get().strip()
         rtsp_thread = threading.Thread(target=run_rtsp_server,
-                                       args=(selected_sources, x264flags),
+                                       args=(selected_sources, x264params),
                                        daemon=True)
         rtsp_thread.start()
 
         
         # attemp to registrate this producer 
         try:
-            server_address = str(ipaddress.ip_address(self.entry.get().strip()))
+            server_address = str(ipaddress.ip_address(self.addr_entry.get().strip()))
             registrate_producer(server_address, selected_sources)
         except Exception as err:
             messagebox.showerror("Error",
                                  "Failed to connect the server.\n{}".format(err))
-            return
-
-        # disable registration
-        self.entry.configure(state='disabled')
-        self.button.configure(state='disabled')
+            # reenable registration
+            self.cam_tree.configure(selectmode='extended')
+            self.addr_entry.configure(state='enabled')
+            self.h264_entry.configure(state='enabled')
+            self.button.configure(state='enabled')
 
 
 def main():
@@ -162,4 +164,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
